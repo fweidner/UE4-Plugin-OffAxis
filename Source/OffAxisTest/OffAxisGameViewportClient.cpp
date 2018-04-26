@@ -434,6 +434,7 @@ void UOffAxisGameViewportClient::Draw(FViewport* InViewport, FCanvas* SceneCanva
 				EStereoscopicPass PassType = !bStereoRendering ? eSSP_FULL : ((i == 0) ? eSSP_LEFT_EYE : eSSP_RIGHT_EYE);
 
 				FSceneView* View = LocalPlayer->CalcSceneView(&ViewFamily, ViewLocation, ViewRotation, InViewport, &GameViewDrawer, PassType);
+
 				if (mOffAxisMatrixSetted)
 					UpdateProjectionMatrix(View, mOffAxisMatrix);
 
