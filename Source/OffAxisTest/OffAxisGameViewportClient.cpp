@@ -56,6 +56,8 @@ extern ENGINE_API UPrimitiveComponent* GDebugSelectedComponent;
 extern ENGINE_API class FLightMap2D* GDebugSelectedLightmap;
 
 
+static int OffAxisVersion = 0; //0 = optimized; 1 = default;
+
 /**
 * UI Stats
 */
@@ -125,134 +127,165 @@ static UCanvas* GetCanvasByName(FName CanvasName)
 	return *FoundCanvas;
 }
 
-// /** Util to gather and sort view extensions */
-// static void GatherViewExtensions(FViewport* InViewport, TArray<TSharedPtr<class ISceneViewExtension, ESPMode::ThreadSafe> >& OutViewExtensions)
-// {
-// 	if (GEngine->HMDDevice->IsValid() && GEngine->IsStereoscopic3D(InViewport))
-// 	{
-// 		auto HmdViewExt = GEngine->HMDDevice->GetViewExtension();
-// 		if (HmdViewExt.IsValid())
-// 		{
-// 			OutViewExtensions.Add(HmdViewExt);
-// 		}
-// 	}
-// 
-// 	for (auto ViewExt : GEngine->ViewExtensions)
-// 	{
-// 		if (ViewExt.IsValid())
-// 		{
-// 			OutViewExtensions.Add(ViewExt);
-// 		}
-// 	}
-// 
-// 	struct SortPriority
-// 	{
-// 		bool operator () (const TSharedPtr<class ISceneViewExtension, ESPMode::ThreadSafe>& A, const TSharedPtr<class ISceneViewExtension, ESPMode::ThreadSafe>& B) const
-// 		{
-// 			return A->GetPriority() > B->GetPriority();
-// 		}
-// 	};
-// 
-// 	Sort(OutViewExtensions.GetData(), OutViewExtensions.Num(), SortPriority());
-// }
-
 static FMatrix FrustumMatrix(float left, float right, float bottom, float top, float nearVal, float farVal)
 {
 	FMatrix Result;
 	Result.SetIdentity();
-	Result.M[0][0] = (2.0f * nearVal) / (right - left);
-	Result.M[1][1] = (2.0f * nearVal) / (top - bottom);
-	Result.M[2][0] = -(right + left) / (right - left);
-	Result.M[2][1] = -(top + bottom) / (top - bottom);
-	Result.M[2][2] = farVal / (farVal - nearVal);
-	Result.M[2][3] = 1.0f;
-	Result.M[3][2] = -(farVal * nearVal) / (farVal - nearVal);
-	Result.M[3][3] = 0;
-
+	if (OffAxisVersion == 0)
+	{
+		Result.M[0][0] = (2.0f * nearVal) / (right - left);
+		Result.M[1][1] = (2.0f * nearVal) / (top - bottom);
+		Result.M[2][0] = -(right + left) / (right - left);
+		Result.M[2][1] = -(top + bottom) / (top - bottom);
+		Result.M[2][2] = farVal / (farVal - nearVal);
+		Result.M[2][3] = 1.0f;
+		Result.M[3][2] = -(farVal * nearVal) / (farVal - nearVal);
+		Result.M[3][3] = 0;
+	}
+	else
+	{
+		Result.M[0][0] = (2.0f * nearVal) / (right - left);
+		Result.M[1][1] = (2.0f * nearVal) / (top - bottom);
+		Result.M[2][0] = (right + left) / (right - left);
+		Result.M[2][1] = (top + bottom) / (top - bottom);
+		Result.M[2][2] = -(farVal + nearVal) / (farVal - nearVal);
+		Result.M[2][3] = -1.0f;
+		Result.M[3][2] = -(2.0f * farVal * nearVal) / (farVal - nearVal);
+		Result.M[3][3] = 0.0f;
+	}
 	return Result;
 }
 
-static FMatrix MagicFix(FMatrix& matrix)
+static FMatrix GenerateOffAxisMatrix_Internal(float _screenWidth, float _screenHeight, const FVector& _eyeRelativePositon, float _newNear)
 {
-	FMatrix result(matrix);
+	float heightFromWidth = _screenHeight / _screenWidth;
 
-	//result.M[1][2] = 0.0f;
-	result.M[2][3] = 1.0f;
-	result.M[2][2] = 0.0f;
-	result.M[3][0] = 0.0f;
-	result.M[3][1] = 0.0f;
+	FMatrix result;
 
-	result.M[2][2] = 0.0f;
-	result.M[3][0] = 0.0f;
-	result.M[3][1] = 0.0f;
+	//(ScreenWidth / 75.0f) * 2.54f; // DPI to cm 
+	float l, r, b, t, n,f ;
+	if (OffAxisVersion == 0)
+	{
+		float width = 270;// 520.f;
+		float height = heightFromWidth * width;
 
-	result *= 1.0f / result.M[0][0];
-	result.M[3][2] = GNearClippingPlane;
+		FVector topLeftCorner(-width / 2.f, -height / 2.f, 0);
+		FVector bottomRightCorner(width / 2.f, height / 2.f, 0);
+		float camZNear = _newNear;// GNearClippingPlane;
+		float camZFar = 30000.0f - _eyeRelativePositon.Z;
+
+		FVector eyeToTopLeft = topLeftCorner - _eyeRelativePositon;
+		FVector eyeToTopLeftNear = camZNear / eyeToTopLeft.Z * eyeToTopLeft;
+		FVector eyeToBottomRight = bottomRightCorner - _eyeRelativePositon;
+		FVector eyeToBottomRightNear = eyeToBottomRight / eyeToBottomRight.Z * camZNear;
+
+		l = eyeToTopLeftNear.X;
+		r = eyeToBottomRightNear.X;
+		b = -eyeToBottomRightNear.Y;
+		t = -eyeToTopLeftNear.Y;
+		n = camZNear;
+		f = camZFar;
+
+		//Frustum: l, r, b, t, near, far
+		FMatrix OffAxisProjectionMatrix = FrustumMatrix(l, r, b, t, n, f);
+
+		FMatrix matFlipZ;
+		matFlipZ.SetIdentity();
+		matFlipZ.M[2][2] = -1.0f;
+		matFlipZ.M[3][2] = 1.0f;
+
+		result =
+			FScaleMatrix(FVector(1, -1, 1)) *
+			FTranslationMatrix(-_eyeRelativePositon) *
+			FScaleMatrix(FVector(1, -1, 1)) *
+			OffAxisProjectionMatrix *
+			matFlipZ;
+
+		result.M[2][2] = 0.0f;
+		result.M[3][0] = 0.0f;
+		result.M[3][1] = 0.0f;
+
+		result *= 1.0f / result.M[0][0];
+		result.M[3][2] = _newNear;// GNearClippingPlane;
+	}
+	else
+	{
+		_screenWidth = 270;
+		_screenHeight = heightFromWidth * _screenWidth;
+		
+		//lower left, lower right, upper left, eye pos, near plane, far plane
+		const FVector pa(-_screenWidth / 2.0f, -_screenHeight / 2.0f, _newNear);
+		const FVector pb(_screenWidth / 2.0f, -_screenHeight / 2.0f, _newNear);
+		const FVector pc(-_screenWidth / 2.0f, _screenHeight / 2.0f, _newNear);
+		const FVector pe(_eyeRelativePositon.X, _eyeRelativePositon.Y, _eyeRelativePositon.Z);
+		n = _newNear;
+		f = 30000.0f;
+
+		FVector va, vb, vc;
+		FVector vr, vu, vn;
+		
+		// Compute an orthonormal basis for the screen.
+		vr = pb - pa;
+		vu = pc - pa;
+		vr.Normalize();
+		vu.Normalize();
+
+		vn = FVector::CrossProduct(vr, vu);
+		vn.Normalize();
+		
+		// Compute the screen corner vectors.
+		va = pa - pe;
+		vb = pb - pe;
+		vc = pc - pe;
+		
+		// Find the distance from the eye to screen plane.
+		float d = -FVector::DotProduct(va, vn);
+	
+		// Find the extent of the perpendicular projection.
+		l = FVector::DotProduct(vr, va) * n / d;
+		r = FVector::DotProduct(vr, vb) * n / d;
+		b = FVector::DotProduct(vu, va) * n / d;
+		t = FVector::DotProduct(vu, vc) * n / d;
+
+		// Load the perpendicular projection.
+		result = FrustumMatrix(l, r, b, t, n, f);
+		
+		// Rotate the projection to be non-perpendicular.
+		FMatrix M;
+		M.SetIdentity();
+		M.M[0][0] = vr.X; M.M[0][1] = vr.Y; M.M[0][2] = vr.Z;
+		M.M[1][0] = vu.X; M.M[1][1] = vu.Y; M.M[1][2] = vu.Z;
+		M.M[2][0] = vn.X; M.M[2][1] = vn.Y; M.M[2][2] = vn.Z;
+		M.M[3][3] = 1.0f;
+		result = result * M;
+		
+		// Move the apex of the frustum to the origin.
+		FMatrix M2;
+		M2.SetIdentity();
+		M2 = M2.ConcatTranslation(FVector(-pe.X, -pe.Y, -pe.Z));
+		result = M2 * result;
+
+		FMatrix matFlipZ;
+		matFlipZ.SetIdentity();
+		matFlipZ.M[2][2] = 1.0f;
+		matFlipZ.M[2][3] = 1.0f;
+
+		result = result * matFlipZ;
+
+		result.M[2][2] = 0.0f;
+		result.M[3][0] = 0.0f;
+		result.M[3][1] = 0.0f;
+
+		result *= 1.0f / result.M[0][0];
+		result.M[3][2] = _newNear;
+	}
 
 	return result;
 }
 
-static FMatrix GenerateOffAxisMatrix_Internal(float ScreenWidth, float ScreenHeight, const FVector& wcsPtHead)
+FMatrix UOffAxisGameViewportClient::GenerateOffAxisMatrix(float _screenWidth, float _screenHeight, const FVector& _eyeRelativePositon, float _newNear)
 {
-	float heightFromWidth = ScreenHeight / ScreenWidth;
-
-	static const auto CVar = IConsoleManager::Get().FindTConsoleVariableDataFloat(TEXT("r.VisageHeadTracker.RealScreenWidth"));
-	float wcsWidth = CVar ? CVar->GetValueOnAnyThread() : 520.0f; //(ScreenWidth / 75.0f) * 2.54f; // DPI to cm 
-
-	float wcsHeight = heightFromWidth * wcsWidth;
-
-	FVector wcsPtTopLeftScreen(-wcsWidth / 2.f, -wcsHeight / 2.f, 0);
-	FVector wcsPtBottomRightScreen(wcsWidth / 2.f, wcsHeight / 2.f, 0);
-	float camZNear = GNearClippingPlane;
-	float wcsZFar = 12000.0f;
-
-	FVector camPtTopLeftScreen = wcsPtTopLeftScreen - wcsPtHead;
-	FVector camPtTopLeftNear = camZNear / camPtTopLeftScreen.Z * camPtTopLeftScreen;
-	FVector camPtBottomRightScreen = wcsPtBottomRightScreen - wcsPtHead;
-	FVector camPtBottomRightNear = camPtBottomRightScreen / camPtBottomRightScreen.Z * camZNear;
-	float camZFar = wcsZFar - wcsPtHead.Z;
-
-	FMatrix OffAxisProjectionMatrix = FrustumMatrix(camPtTopLeftNear.X, camPtBottomRightNear.X,
-		-camPtBottomRightNear.Y, -camPtTopLeftNear.Y, camZNear, camZFar);
-
-	FMatrix matFlipZ;
-	matFlipZ.SetIdentity();
-	matFlipZ.M[2][2] = -1.0f;
-	matFlipZ.M[3][2] = 1.0f;
-
-	FMatrix result = FScaleMatrix(FVector(1, -1, 1)) *
-		FTranslationMatrix(-wcsPtHead) *
-		FScaleMatrix(FVector(1, -1, 1)) *
-		OffAxisProjectionMatrix *
-		matFlipZ;
-
-	result.M[2][2] = 0.0f;
-	result.M[3][0] = 0.0f;
-	result.M[3][1] = 0.0f;
-
-	result *= 1.0f / result.M[0][0];
-	result.M[3][2] = GNearClippingPlane;
-
-	return result;
-}
-
-FMatrix UOffAxisGameViewportClient::GenerateOffAxisMatrix(float ScreenWidth, float ScreenHeight, FVector eyePosition)
-{
-	/*float headX = eyePosition.X / ScreenHeight;
-	float headY = eyePosition.Y / ScreenHeight;
-	float headDist = eyePosition.Z / ScreenHeight;
-	float screenAspect = ScreenWidth / ScreenHeight;
-
-	float nearPlane = GNearClippingPlane;
-	FMatrix resultM = FrustumMatrix(nearPlane*(-.5f * screenAspect - headX) / headDist,
-		nearPlane*(.5f * screenAspect - headX) / headDist,
-		nearPlane*(-.5f + headY) / headDist,
-		nearPlane*(.5f + headY) / headDist,
-		nearPlane, 1000.0f);
-
-	return MagicFix(resultM);*/
-
-	return GenerateOffAxisMatrix_Internal(ScreenWidth, ScreenHeight, eyePosition);
+	return GenerateOffAxisMatrix_Internal(_screenWidth, _screenHeight, _eyeRelativePositon, _newNear);
 }
 
 void UOffAxisGameViewportClient::SetOffAxisMatrix(FMatrix OffAxisMatrix)
@@ -264,6 +297,24 @@ void UOffAxisGameViewportClient::SetOffAxisMatrix(FMatrix OffAxisMatrix)
 		This->mOffAxisMatrixSetted = true;
 		This->mOffAxisMatrix = OffAxisMatrix;
 	}
+}
+
+void UOffAxisGameViewportClient::ToggleOffAxisMethod()
+{
+	if (OffAxisVersion == 0)
+	{
+		OffAxisVersion = 1;
+	}
+	else
+	{
+		OffAxisVersion = 0;
+	}
+	PrintCurrentOffAxisVersioN();
+}
+
+void UOffAxisGameViewportClient::PrintCurrentOffAxisVersioN()
+{
+	UE_LOG(LogConsoleResponse, Warning, TEXT("OffAxisVersion: %s"), (OffAxisVersion ? TEXT("Basic") : TEXT("Optimized"))); //if true (==1) -> basic, else opitmized
 }
 
 static FMatrix _AdjustProjectionMatrixForRHI(const FMatrix& InProjectionMatrix)
@@ -278,39 +329,72 @@ static FMatrix _AdjustProjectionMatrixForRHI(const FMatrix& InProjectionMatrix)
 
 static void UpdateProjectionMatrix(FSceneView* View, FMatrix OffAxisMatrix)
 {
-	View->ProjectionMatrixUnadjustedForRHI = OffAxisMatrix;
 
-	//FVector viewOrigin(0.0f, 0.0f, View->ProjectionMatrixUnadjustedForRHI.M[3][3]);
+	if (OffAxisVersion == 0)
+	{
+		View->ProjectionMatrixUnadjustedForRHI = OffAxisMatrix;
 
-	//View->ViewMatrices.ViewMatrix.SetOrigin(View->ViewMatrices.ViewMatrix.GetOrigin() - viewOrigin);
+		FMatrix* pInvViewMatrix = (FMatrix*)(&View->ViewMatrices.GetInvViewMatrix());
+		*pInvViewMatrix = View->ViewMatrices.GetViewMatrix().Inverse();
 
-	FMatrix* pInvViewMatrix = (FMatrix*)(&View->ViewMatrices.GetInvViewMatrix());
-	*pInvViewMatrix = View->ViewMatrices.GetViewMatrix().Inverse();
-	//View->ViewMatrices.ViewOrigin = View->InvViewMatrix.GetOrigin();
-	//View->ViewMatrices.ViewOrigin += View->InvViewMatrix.TransformPosition(-viewOrigin);
-	FVector* pPreViewTranslation = (FVector*)(&View->ViewMatrices.GetPreViewTranslation());
-	*pPreViewTranslation = -View->ViewMatrices.GetViewOrigin();
+		FVector* pPreViewTranslation = (FVector*)(&View->ViewMatrices.GetPreViewTranslation());
+		*pPreViewTranslation = -View->ViewMatrices.GetViewOrigin();
 
-	FMatrix* pProjectionMatrix = (FMatrix*)(&View->ViewMatrices.GetProjectionMatrix());
-	*pProjectionMatrix = _AdjustProjectionMatrixForRHI(View->ProjectionMatrixUnadjustedForRHI);
+		FMatrix* pProjectionMatrix = (FMatrix*)(&View->ViewMatrices.GetProjectionMatrix());
+		*pProjectionMatrix = _AdjustProjectionMatrixForRHI(View->ProjectionMatrixUnadjustedForRHI);
 
-	//* pViewProjectionMatrix = (FMatrix*)(&View->ViewMatrices.GetViewProjectionMatrix());
-	//*pViewProjectionMatrix = View->ViewMatrices.GetViewProjectionMatrix();
+		FMatrix TranslatedViewMatrix = FTranslationMatrix(-View->ViewMatrices.GetPreViewTranslation()) * View->ViewMatrices.GetViewMatrix();
+		FMatrix* pTranslatedViewProjectionMatrix = (FMatrix*)(&View->ViewMatrices.GetTranslatedViewProjectionMatrix());
+		*pTranslatedViewProjectionMatrix = TranslatedViewMatrix * View->ViewMatrices.GetProjectionMatrix();
 
-	//FMatrix* pInvViewProjectionMatrix = View->ViewMatrices.GetInvViewProjectionMatrix() * 
-	//View->InvViewProjectionMatrix = View->ViewMatrices.GetInvProjMatrix() * View->InvViewMatrix;
+		FMatrix* pInvTranslatedViewProjectionMatrixx = (FMatrix*)(&View->ViewMatrices.GetInvTranslatedViewProjectionMatrix());
+		*pInvTranslatedViewProjectionMatrixx = View->ViewMatrices.GetTranslatedViewProjectionMatrix().Inverse();
 
-	FMatrix TranslatedViewMatrix = FTranslationMatrix(-View->ViewMatrices.GetPreViewTranslation()) * View->ViewMatrices.GetViewMatrix();
-	FMatrix* pTranslatedViewProjectionMatrix = (FMatrix*)(&View->ViewMatrices.GetTranslatedViewProjectionMatrix());
-	*pTranslatedViewProjectionMatrix = TranslatedViewMatrix * View->ViewMatrices.GetProjectionMatrix();
+		View->ShadowViewMatrices = View->ViewMatrices;
 
-	FMatrix* pInvTranslatedViewProjectionMatrixx = (FMatrix*)(&View->ViewMatrices.GetInvTranslatedViewProjectionMatrix());
-	*pInvTranslatedViewProjectionMatrixx = View->ViewMatrices.GetTranslatedViewProjectionMatrix().Inverse();
-	View->ShadowViewMatrices = View->ViewMatrices;
+		GetViewFrustumBounds(View->ViewFrustum, View->ViewMatrices.GetViewProjectionMatrix(), false);
+	}
+	else
+	{
+		FMatrix axisChanger;
 
-	//View->InvDeviceZToWorldZTransform = CreateInvDeviceZToWorldZTransform(View->ProjectionMatrixUnadjustedForRHI);
+		axisChanger.SetIdentity();
+		axisChanger.M[0][0] = 0.0f;
+		axisChanger.M[1][1] = 0.0f;
+		axisChanger.M[2][2] = 0.0f;
 
-	GetViewFrustumBounds(View->ViewFrustum, View->ViewMatrices.GetViewProjectionMatrix(), false);
+		axisChanger.M[0][2] = 1.0f;
+		axisChanger.M[1][0] = 1.0f;
+		axisChanger.M[2][1] = 1.0f;
+
+		View->ProjectionMatrixUnadjustedForRHI = View->ViewMatrices.GetViewMatrix().Inverse() * axisChanger * OffAxisMatrix;
+
+		FMatrix* pInvViewMatrix = (FMatrix*)(&View->ViewMatrices.GetInvViewMatrix());
+		*pInvViewMatrix = View->ViewMatrices.GetViewMatrix().Inverse();
+
+		FMatrix* pProjectionMatrix = (FMatrix*)(&View->ViewMatrices.GetProjectionMatrix());
+		*pProjectionMatrix = _AdjustProjectionMatrixForRHI(View->ProjectionMatrixUnadjustedForRHI);
+
+
+		FMatrix TranslatedViewMatrix = FTranslationMatrix(-View->ViewMatrices.GetPreViewTranslation()) * View->ViewMatrices.GetViewMatrix();
+
+		FMatrix* pTranslatedViewMatrix = (FMatrix*)(&View->ViewMatrices.GetTranslatedViewMatrix());
+		*pTranslatedViewMatrix = TranslatedViewMatrix;
+	
+		FMatrix* pInvTranslatedViewMatrix = (FMatrix*)(&View->ViewMatrices.GetInvTranslatedViewMatrix());
+		*pInvTranslatedViewMatrix = TranslatedViewMatrix.Inverse();
+			
+		FMatrix* pTranslatedViewProjectionMatrix = (FMatrix*)(&View->ViewMatrices.GetTranslatedViewProjectionMatrix());
+		*pTranslatedViewProjectionMatrix = TranslatedViewMatrix * View->ViewMatrices.GetProjectionMatrix();	
+		
+		FMatrix* pInvTranslatedViewProjectionMatrix = (FMatrix*)(&View->ViewMatrices.GetInvTranslatedViewProjectionMatrix());
+		*pInvTranslatedViewProjectionMatrix = View->ViewMatrices.GetTranslatedViewProjectionMatrix().Inverse();
+
+
+		View->ShadowViewMatrices = View->ViewMatrices;
+
+		GetViewFrustumBounds(View->ViewFrustum, View->ViewMatrices.GetViewProjectionMatrix(), false);
+	}
 }
 
 void UOffAxisGameViewportClient::Draw(FViewport* InViewport, FCanvas* SceneCanvas)
@@ -357,7 +441,7 @@ void UOffAxisGameViewportClient::Draw(FViewport* InViewport, FCanvas* SceneCanva
 		EngineShowFlags)
 		.SetRealtimeUpdate(true));
 
-//	GatherViewExtensions(InViewport, ViewFamily.ViewExtensions);
+	//	GatherViewExtensions(InViewport, ViewFamily.ViewExtensions);
 	ViewFamily.ViewExtensions = GEngine->ViewExtensions->GatherActiveExtensions(InViewport);
 
 
@@ -435,8 +519,14 @@ void UOffAxisGameViewportClient::Draw(FViewport* InViewport, FCanvas* SceneCanva
 
 				FSceneView* View = LocalPlayer->CalcSceneView(&ViewFamily, ViewLocation, ViewRotation, InViewport, &GameViewDrawer, PassType);
 
+				/************************************************************************/
+				/* OFF-AXIS-MAGIC                                                       */
+				/************************************************************************/
 				if (mOffAxisMatrixSetted)
 					UpdateProjectionMatrix(View, mOffAxisMatrix);
+				/************************************************************************/
+				/* OFF-AXIS-MAGIC                                                       */
+				/************************************************************************/
 
 				if (View)
 				{

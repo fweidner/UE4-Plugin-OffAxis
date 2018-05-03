@@ -16,10 +16,16 @@ class OFFAXISTEST_API UOffAxisGameViewportClient : public UGameViewportClient
 public:
 
 	UFUNCTION(BlueprintCallable, Category = "OffAxis")
-	static FMatrix GenerateOffAxisMatrix(float ScreenWidth, float ScreenHeight, FVector eyePosition);
+		static FMatrix GenerateOffAxisMatrix(float _screenWidth, float _screenHeight, const FVector& _eyeRelativePositon, float _newNear);
 
 	UFUNCTION(BlueprintCallable, Category = "OffAxis")
-	static void SetOffAxisMatrix(FMatrix OffAxisMatrix);
+		static void SetOffAxisMatrix(FMatrix OffAxisMatrix);
+
+	UFUNCTION(BlueprintCallable, Category = "OffAxis")
+		static void ToggleOffAxisMethod();
+
+	UFUNCTION(BlueprintCallable, Category = "OffAxis")
+		static void PrintCurrentOffAxisVersioN();
 	
 	virtual void Draw(FViewport* Viewport, FCanvas* SceneCanvas) override;
 
