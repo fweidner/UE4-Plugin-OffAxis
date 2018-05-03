@@ -9,7 +9,6 @@ public class OffAxisTestTarget : TargetRules
 	{
 		Type = TargetType.Game;
 		ExtraModuleNames.Add("OffAxisTest");
-
 	}
 
 	//
