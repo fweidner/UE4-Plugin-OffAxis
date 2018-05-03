@@ -79,3 +79,4 @@ Content/StarterContent/*
 
 *.umap
 Releases/
+enc_temp_folder/*
