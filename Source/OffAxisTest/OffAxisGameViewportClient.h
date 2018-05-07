@@ -34,6 +34,5 @@ private:
 	FName CurrentBufferVisualizationMode;
 	FMatrix		mOffAxisMatrix;
 	bool		mOffAxisMatrixSetted = false;
-
 };
 
