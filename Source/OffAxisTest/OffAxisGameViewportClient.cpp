@@ -158,34 +158,39 @@ static FMatrix FrustumMatrix(float left, float right, float bottom, float top, f
 
 static FMatrix GenerateOffAxisMatrix_Internal(float _screenWidth, float _screenHeight, const FVector& _eyeRelativePositon, float _newNear)
 {
-	float heightFromWidth = _screenHeight / _screenWidth;
-
 	FMatrix result;
 
-	//(ScreenWidth / 75.0f) * 2.54f; // DPI to cm 
+	
+	
+//	(ScreenWidth / 75.0f) * 2.54f; // DPI to cm 
+// 	float heightFromWidth = _screenHeight / _screenWidth;
+// 	float width = 520.f;
+// 	float height = heightFromWidth * width;
+	
+	float width = _screenWidth;
+	float height = _screenHeight;
+	
 	float l, r, b, t, n,f ;
+
+	n = GNearClippingPlane;
+	f = 12000.f;
+
+
 	if (OffAxisVersion == 0)
 	{
-		float width = 270;// 520.f;
-		float height = heightFromWidth * width;
-
 		FVector topLeftCorner(-width / 2.f, -height / 2.f, 0);
 		FVector bottomRightCorner(width / 2.f, height / 2.f, 0);
-		float camZNear = _newNear;// GNearClippingPlane;
-		float camZFar = 30000.0f - _eyeRelativePositon.Z;
-
+	
 		FVector eyeToTopLeft = topLeftCorner - _eyeRelativePositon;
-		FVector eyeToTopLeftNear = camZNear / eyeToTopLeft.Z * eyeToTopLeft;
+		FVector eyeToTopLeftNear = n / eyeToTopLeft.Z * eyeToTopLeft;
 		FVector eyeToBottomRight = bottomRightCorner - _eyeRelativePositon;
-		FVector eyeToBottomRightNear = eyeToBottomRight / eyeToBottomRight.Z * camZNear;
+		FVector eyeToBottomRightNear = eyeToBottomRight / eyeToBottomRight.Z * n;
 
 		l = eyeToTopLeftNear.X;
 		r = eyeToBottomRightNear.X;
 		b = -eyeToBottomRightNear.Y;
 		t = -eyeToTopLeftNear.Y;
-		n = camZNear;
-		f = camZFar;
-
+	
 		//Frustum: l, r, b, t, near, far
 		FMatrix OffAxisProjectionMatrix = FrustumMatrix(l, r, b, t, n, f);
 
@@ -206,20 +211,18 @@ static FMatrix GenerateOffAxisMatrix_Internal(float _screenWidth, float _screenH
 		result.M[3][1] = 0.0f;
 
 		result *= 1.0f / result.M[0][0];
-		result.M[3][2] = _newNear;// GNearClippingPlane;
+		result.M[3][2] = n;// GNearClippingPlane;
 	}
 	else
 	{
-		_screenWidth = 270;
-		_screenHeight = heightFromWidth * _screenWidth;
+
+		//this is analog to: http://csc.lsu.edu/~kooima/articles/genperspective/
 		
-		//lower left, lower right, upper left, eye pos, near plane, far plane
-		const FVector pa(-_screenWidth / 2.0f, -_screenHeight / 2.0f, _newNear);
-		const FVector pb(_screenWidth / 2.0f, -_screenHeight / 2.0f, _newNear);
-		const FVector pc(-_screenWidth / 2.0f, _screenHeight / 2.0f, _newNear);
+		//lower left, lower right, upper left, eye pos
+ 		const FVector pa(-width / 2.0f, -height / 2.0f, n);
+ 		const FVector pb(width / 2.0f, -height / 2.0f, n);
+ 		const FVector pc(-width / 2.0f, height / 2.0f, n);
 		const FVector pe(_eyeRelativePositon.X, _eyeRelativePositon.Y, _eyeRelativePositon.Z);
-		n = _newNear;
-		f = 30000.0f;
 
 		FVector va, vb, vc;
 		FVector vr, vu, vn;
@@ -265,6 +268,8 @@ static FMatrix GenerateOffAxisMatrix_Internal(float _screenWidth, float _screenH
 		M2 = M2.ConcatTranslation(FVector(-pe.X, -pe.Y, -pe.Z));
 		result = M2 * result;
 
+		
+
 		FMatrix matFlipZ;
 		matFlipZ.SetIdentity();
 		matFlipZ.M[2][2] = 1.0f;
@@ -277,7 +282,9 @@ static FMatrix GenerateOffAxisMatrix_Internal(float _screenWidth, float _screenH
 		result.M[3][1] = 0.0f;
 
 		result *= 1.0f / result.M[0][0];
-		result.M[3][2] = _newNear;
+		result.M[3][2] = n;
+
+		
 	}
 
 	return result;
