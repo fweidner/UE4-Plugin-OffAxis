@@ -215,7 +215,6 @@ static FMatrix GenerateOffAxisMatrix_Internal(float _screenWidth, float _screenH
 	}
 	else
 	{
-
 		//this is analog to: http://csc.lsu.edu/~kooima/articles/genperspective/
 		
 		//lower left, lower right, upper left, eye pos
@@ -268,8 +267,6 @@ static FMatrix GenerateOffAxisMatrix_Internal(float _screenWidth, float _screenH
 		M2 = M2.ConcatTranslation(FVector(-pe.X, -pe.Y, -pe.Z));
 		result = M2 * result;
 
-		
-
 		FMatrix matFlipZ;
 		matFlipZ.SetIdentity();
 		matFlipZ.M[2][2] = -1.0f;
@@ -283,8 +280,6 @@ static FMatrix GenerateOffAxisMatrix_Internal(float _screenWidth, float _screenH
 
 		result *= 1.0f / result.M[0][0];
 		result.M[3][2] = n;
-
-		
 	}
 
 	return result;
