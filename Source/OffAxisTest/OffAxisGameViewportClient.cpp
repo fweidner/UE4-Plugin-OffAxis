@@ -159,13 +159,6 @@ static FMatrix FrustumMatrix(float left, float right, float bottom, float top, f
 static FMatrix GenerateOffAxisMatrix_Internal(float _screenWidth, float _screenHeight, const FVector& _eyeRelativePositon, float _newNear, FRotator _eyeRotation)
 {
 	FMatrix result;
-
-	
-	
-//	(ScreenWidth / 75.0f) * 2.54f; // DPI to cm 
-// 	float heightFromWidth = _screenHeight / _screenWidth;
-// 	float width = 520.f;
-// 	float height = heightFromWidth * width;
 	
 	float width = _screenWidth;
 	float height = _screenHeight;
@@ -211,7 +204,7 @@ static FMatrix GenerateOffAxisMatrix_Internal(float _screenWidth, float _screenH
 		result.M[3][1] = 0.0f;
 
 		result *= 1.0f / result.M[0][0];
-		result.M[3][2] = n;// GNearClippingPlane;
+		result.M[3][2] = n;
 	}
 	else
 	{
@@ -242,7 +235,8 @@ static FMatrix GenerateOffAxisMatrix_Internal(float _screenWidth, float _screenH
 		
 		// Find the distance from the eye to screen plane.
 		float d = -FVector::DotProduct(va, vn);
-	
+		//UE_LOG(LogConsoleResponse, Warning, TEXT("d: %f"), d);
+
 		// Find the extent of the perpendicular projection.
 		l = FVector::DotProduct(vr, va) * n / d;
 		r = FVector::DotProduct(vr, vb) * n / d;
@@ -267,6 +261,8 @@ static FMatrix GenerateOffAxisMatrix_Internal(float _screenWidth, float _screenH
 		M2 = M2.ConcatTranslation(FVector(-pe.X, -pe.Y, -pe.Z));
 		result = M2 * result;
 
+
+
 		FMatrix matFlipZ;
 		matFlipZ.SetIdentity();
 		matFlipZ.M[2][2] = -1.0f;
@@ -274,6 +270,8 @@ static FMatrix GenerateOffAxisMatrix_Internal(float _screenWidth, float _screenH
 
 		result = result * matFlipZ;
 
+
+		//
 		result.M[2][2] = 0.0f;
 		result.M[3][0] = 0.0f;
 		result.M[3][1] = 0.0f;
