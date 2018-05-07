@@ -41,7 +41,7 @@
 
 #include "IXRTrackingSystem.h"
 
-
+#pragma warning (disable : 4459 ) /* declaration of xxx hides global declaration */
 
 #define LOCTEXT_NAMESPACE "GameViewport"
 
