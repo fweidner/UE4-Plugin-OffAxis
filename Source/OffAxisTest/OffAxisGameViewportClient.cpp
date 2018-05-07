@@ -156,7 +156,7 @@ static FMatrix FrustumMatrix(float left, float right, float bottom, float top, f
 	return Result;
 }
 
-static FMatrix GenerateOffAxisMatrix_Internal(float _screenWidth, float _screenHeight, const FVector& _eyeRelativePositon, float _newNear)
+static FMatrix GenerateOffAxisMatrix_Internal(float _screenWidth, float _screenHeight, const FVector& _eyeRelativePositon, float _newNear, FRotator _eyeRotation)
 {
 	FMatrix result;
 
@@ -290,9 +290,9 @@ static FMatrix GenerateOffAxisMatrix_Internal(float _screenWidth, float _screenH
 	return result;
 }
 
-FMatrix UOffAxisGameViewportClient::GenerateOffAxisMatrix(float _screenWidth, float _screenHeight, const FVector& _eyeRelativePositon, float _newNear)
+FMatrix UOffAxisGameViewportClient::GenerateOffAxisMatrix(float _screenWidth, float _screenHeight, const FVector& _eyeRelativePositon, float _newNear, FRotator _eyeRotation)
 {
-	return GenerateOffAxisMatrix_Internal(_screenWidth, _screenHeight, _eyeRelativePositon, _newNear);
+	return GenerateOffAxisMatrix_Internal(_screenWidth, _screenHeight, _eyeRelativePositon, _newNear, _eyeRotation);
 }
 
 void UOffAxisGameViewportClient::SetOffAxisMatrix(FMatrix OffAxisMatrix)

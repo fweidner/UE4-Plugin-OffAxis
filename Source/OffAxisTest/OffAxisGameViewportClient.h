@@ -16,7 +16,7 @@ class OFFAXISTEST_API UOffAxisGameViewportClient : public UGameViewportClient
 public:
 
 	UFUNCTION(BlueprintCallable, Category = "OffAxis")
-		static FMatrix GenerateOffAxisMatrix(float _screenWidth, float _screenHeight, const FVector& _eyeRelativePositon, float _newNear);
+		static FMatrix GenerateOffAxisMatrix(float _screenWidth, float _screenHeight, const FVector& _eyeRelativePositon, float _newNear, FRotator _eyeRotation);
 
 	UFUNCTION(BlueprintCallable, Category = "OffAxis")
 		static void SetOffAxisMatrix(FMatrix OffAxisMatrix);
@@ -32,7 +32,6 @@ public:
 private:
 
 	FName CurrentBufferVisualizationMode;
-
 	FMatrix		mOffAxisMatrix;
 	bool		mOffAxisMatrixSetted = false;
 
