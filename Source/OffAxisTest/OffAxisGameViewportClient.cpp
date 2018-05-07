@@ -272,8 +272,8 @@ static FMatrix GenerateOffAxisMatrix_Internal(float _screenWidth, float _screenH
 
 		FMatrix matFlipZ;
 		matFlipZ.SetIdentity();
-		matFlipZ.M[2][2] = 1.0f;
-		matFlipZ.M[2][3] = 1.0f;
+		matFlipZ.M[2][2] = -1.0f;
+		matFlipZ.M[3][2] = 1.0f;
 
 		result = result * matFlipZ;
 
