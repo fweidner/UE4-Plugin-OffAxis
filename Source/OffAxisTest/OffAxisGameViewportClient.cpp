@@ -306,52 +306,10 @@ static FMatrix _AdjustProjectionMatrixForRHI(const FMatrix& InProjectionMatrix)
 
 static void UpdateProjectionMatrix(FSceneView* View, FMatrix OffAxisMatrix)
 {
-
-	if (OffAxisVersion == 0)
-	{
 		View->ProjectionMatrixUnadjustedForRHI = OffAxisMatrix;
-
-		FMatrix* pInvViewMatrix = (FMatrix*)(&View->ViewMatrices.GetInvViewMatrix());
-		*pInvViewMatrix = View->ViewMatrices.GetViewMatrix().Inverse();
 
 		FVector* pPreViewTranslation = (FVector*)(&View->ViewMatrices.GetPreViewTranslation());
 		*pPreViewTranslation = -View->ViewMatrices.GetViewOrigin();
-
-		FMatrix* pProjectionMatrix = (FMatrix*)(&View->ViewMatrices.GetProjectionMatrix());
-		*pProjectionMatrix = _AdjustProjectionMatrixForRHI(View->ProjectionMatrixUnadjustedForRHI);
-
-		FMatrix TranslatedViewMatrix = FTranslationMatrix(-View->ViewMatrices.GetPreViewTranslation()) * View->ViewMatrices.GetViewMatrix();
-		FMatrix* pTranslatedViewProjectionMatrix = (FMatrix*)(&View->ViewMatrices.GetTranslatedViewProjectionMatrix());
-		*pTranslatedViewProjectionMatrix = TranslatedViewMatrix * View->ViewMatrices.GetProjectionMatrix();
-
-		FMatrix* pInvTranslatedViewProjectionMatrixx = (FMatrix*)(&View->ViewMatrices.GetInvTranslatedViewProjectionMatrix());
-		*pInvTranslatedViewProjectionMatrixx = View->ViewMatrices.GetTranslatedViewProjectionMatrix().Inverse();
-
-		View->ShadowViewMatrices = View->ViewMatrices;
-
-		GetViewFrustumBounds(View->ViewFrustum, View->ViewMatrices.GetViewProjectionMatrix(), false);
-	}
-	else
-	{
-		FMatrix axisChanger;
-
-		axisChanger.SetIdentity();
-		axisChanger.M[0][0] = 0.0f;
-		axisChanger.M[1][1] = 0.0f;
-		axisChanger.M[2][2] = 0.0f;
-
-		axisChanger.M[0][2] = 1.0f;
-		axisChanger.M[1][0] = 1.0f;
-		axisChanger.M[2][1] = 1.0f;
-
-		View->ProjectionMatrixUnadjustedForRHI = View->ViewMatrices.GetViewMatrix().Inverse() * axisChanger * OffAxisMatrix;
-
-		FMatrix* pInvViewMatrix = (FMatrix*)(&View->ViewMatrices.GetInvViewMatrix());
-		*pInvViewMatrix = View->ViewMatrices.GetViewMatrix().Inverse();
-
-		FMatrix* pProjectionMatrix = (FMatrix*)(&View->ViewMatrices.GetProjectionMatrix());
-		*pProjectionMatrix = _AdjustProjectionMatrixForRHI(View->ProjectionMatrixUnadjustedForRHI);
-
 
 		FMatrix TranslatedViewMatrix = FTranslationMatrix(-View->ViewMatrices.GetPreViewTranslation()) * View->ViewMatrices.GetViewMatrix();
 
@@ -364,15 +322,19 @@ static void UpdateProjectionMatrix(FSceneView* View, FMatrix OffAxisMatrix)
 		FMatrix* pTranslatedViewProjectionMatrix = (FMatrix*)(&View->ViewMatrices.GetTranslatedViewProjectionMatrix());
 		*pTranslatedViewProjectionMatrix = TranslatedViewMatrix * View->ViewMatrices.GetProjectionMatrix();	
 		
-		FMatrix* pInvTranslatedViewProjectionMatrix = (FMatrix*)(&View->ViewMatrices.GetInvTranslatedViewProjectionMatrix());
-		*pInvTranslatedViewProjectionMatrix = View->ViewMatrices.GetTranslatedViewProjectionMatrix().Inverse();
+	FMatrix* pInvViewMatrix = (FMatrix*)(&View->ViewMatrices.GetInvViewMatrix());
+	*pInvViewMatrix = View->ViewMatrices.GetViewMatrix().Inverse();
 
+	FMatrix* pProjectionMatrix = (FMatrix*)(&View->ViewMatrices.GetProjectionMatrix());
+	*pProjectionMatrix = _AdjustProjectionMatrixForRHI(View->ProjectionMatrixUnadjustedForRHI);
+
+	FMatrix* pInvTranslatedViewProjectionMatrixx = (FMatrix*)(&View->ViewMatrices.GetInvTranslatedViewProjectionMatrix());
+	*pInvTranslatedViewProjectionMatrixx = View->ViewMatrices.GetTranslatedViewProjectionMatrix().Inverse();
 
 		View->ShadowViewMatrices = View->ViewMatrices;
 
 		GetViewFrustumBounds(View->ViewFrustum, View->ViewMatrices.GetViewProjectionMatrix(), false);
 	}
-}
 
 void UOffAxisGameViewportClient::Draw(FViewport* InViewport, FCanvas* SceneCanvas)
 {
