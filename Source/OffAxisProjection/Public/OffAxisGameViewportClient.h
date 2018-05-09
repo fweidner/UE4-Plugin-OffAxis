@@ -30,7 +30,6 @@ public:
 	virtual void Draw(FViewport* Viewport, FCanvas* SceneCanvas) override;
 
 private:
-
 	FName CurrentBufferVisualizationMode;
 	FMatrix		mOffAxisMatrix;
 	bool		mOffAxisMatrixSetted = false;
