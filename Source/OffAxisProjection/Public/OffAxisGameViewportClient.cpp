@@ -1,6 +1,5 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "OffAxisTest.h"
 #include "OffAxisGameViewportClient.h"
 
 #include "Engine/Console.h"
@@ -32,14 +31,18 @@
 #include "GameFramework/GameUserSettings.h"
 #include "Runtime/Engine/Classes/Engine/UserInterfaceSettings.h"
 #include "ContentStreaming.h"
-
 #include "SGameLayerManager.h"
 #include "ActorEditorUtils.h"
 #include "ComponentRecreateRenderStateContext.h"
 #include "Stats2.h"
 #include "NameTypes.h"
 
+//added during upgrade to 4.18
 #include "IXRTrackingSystem.h"
+
+//added during plugin creation
+#include "Runtime/Engine/Classes//Engine//Canvas.h"
+#include "Runtime/Engine/Public/EngineUtils.h"
 
 #pragma warning (disable : 4459 ) /* declaration of xxx hides global declaration */
 
@@ -774,7 +777,6 @@ void UOffAxisGameViewportClient::Draw(FViewport* InViewport, FCanvas* SceneCanva
 	}
 
 	DrawStatsHUD(MyWorld, InViewport, DebugCanvas, DebugCanvasObject, DebugProperties, PlayerCameraLocation, PlayerCameraRotation);
-
 
 	//EndDrawDelegate.Broadcast();
 }
