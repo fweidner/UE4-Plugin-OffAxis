@@ -9,7 +9,7 @@
  * 
  */
 UCLASS(BlueprintType)
-class OFFAXISTEST_API UOffAxisGameViewportClient : public UGameViewportClient
+class UOffAxisGameViewportClient : public UGameViewportClient
 {
 	GENERATED_BODY()
 
