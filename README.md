@@ -25,5 +25,7 @@ https://answers.unrealengine.com/questions/65003/howto-modify-the-projection-mat
 
 ## How to use:
 
-1. Drag the actor in your scene
+1. Drag the OffAxisActor in your scene
 2. Update viewport class in Edit->Project Settings->General Settings 
+3. Adjust the four cubes of the OffAxisActor so that they correspond with your desired screen width and height
+4. (You can also adjust the monitor for easier debugging)
