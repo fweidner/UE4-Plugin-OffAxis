@@ -43,6 +43,8 @@
 //added during plugin creation
 #include "Runtime/Engine/Classes//Engine//Canvas.h"
 #include "Runtime/Engine/Public/EngineUtils.h"
+#include "Runtime/Engine/Classes/Engine/LocalPlayer.h"
+#include "Runtime/Engine/Public/UnrealEngine.h"
 
 #pragma warning (disable : 4459 ) /* declaration of xxx hides global declaration */
 

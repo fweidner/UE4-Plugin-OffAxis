@@ -14,10 +14,13 @@
 	"IsBetaVersion": false,
 	"Installed": false,
 	"Modules": [
-		{
-			"Name": "OffAxisProjection",
-			"Type": "Runtime",
-			"LoadingPhase": "PreLoadingScreen"
-		}
+    {
+      "Name": "OffAxisProjection",
+      "Type": "Runtime",
+      "LoadingPhase": "Default",
+      "WhitelistPlatforms": [
+        "Win64"
+      ]
+    }
 	]
 }
