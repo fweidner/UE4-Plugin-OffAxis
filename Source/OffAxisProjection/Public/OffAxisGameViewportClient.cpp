@@ -43,6 +43,8 @@
 //added during plugin creation
 #include "Runtime/Engine/Classes//Engine//Canvas.h"
 #include "Runtime/Engine/Public/EngineUtils.h"
+#include "Runtime/Engine/Classes/Engine/LocalPlayer.h"
+#include "Runtime/Engine/Public/UnrealEngine.h"
 
 #pragma warning (disable : 4459 ) /* declaration of xxx hides global declaration */
 
@@ -195,7 +197,6 @@ static FMatrix GenerateOffAxisMatrix_Internal(float _screenWidth, float _screenH
 		t = -eyeToBottomRightNear.Y;
 		b = -eyeToTopLeftNear.Y;
 
-		// UE_LOG(LogConsoleResponse, Warning, TEXT("lrbtnf: %f, %f, %f, %f, %f, %f"), l, r, b, t, n, f);
 
 		//Frustum: l, r, b, t, near, far
 		OffAxisProjectionMatrix = FrustumMatrix(l, r, b, t, n, f);
@@ -203,8 +204,6 @@ static FMatrix GenerateOffAxisMatrix_Internal(float _screenWidth, float _screenH
 		result =
 			FTranslationMatrix(-_eyeRelativePositon) *
 			OffAxisProjectionMatrix;
-
-
 	}
 	else
 	{
@@ -240,12 +239,11 @@ static FMatrix GenerateOffAxisMatrix_Internal(float _screenWidth, float _screenH
 		b = FVector::DotProduct(vu, va) * n / d;
 		t = FVector::DotProduct(vu, vc) * n / d;
 
-		// UE_LOG(LogConsoleResponse, Warning, TEXT("lrbtnf: %f, %f, %f, %f, %f, %f"), l, r, b, t, n, f);
-
 		// Load the perpendicular projection.
 		result = FrustumMatrix(l, r, b, t, n, f);
 
-		// Rotate the projection to be non-perpendicular.
+		// Rotate the projection to be non-perpendicular. 
+		// This is currently unused until the screen is unused.
 		FMatrix M;
 		M.SetIdentity();
 		M.M[0][0] = vr.X; M.M[0][1] = vr.Y; M.M[0][2] = vr.Z;
@@ -260,6 +258,9 @@ static FMatrix GenerateOffAxisMatrix_Internal(float _screenWidth, float _screenH
 		M2 = M2.ConcatTranslation(FVector(-pe.X, -pe.Y, -pe.Z));
 		result = M2 * result;
 	}
+
+	// UE_LOG(LogConsoleResponse, Warning, TEXT("lrbtnf: %f, %f, %f, %f, %f, %f"), l, r, b, t, n, f);
+
 
 	result *= matFlipZ;
 
