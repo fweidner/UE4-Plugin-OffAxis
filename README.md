@@ -24,8 +24,27 @@ Michael Deering. 1992. High resolution virtual reality. ACM SIGGRAPH Computer Gr
 https://answers.unrealengine.com/questions/65003/howto-modify-the-projection-matrix.html
 
 ## How to use:
+Assuming you start with a Basic Code C++ project:
+- Update viewport class in Edit->Project Settings->General Settings 
+- Adjust Input mappings in Config/DefaultInput.ini
+- Drag the OffAxisActor in your scene
+- Set position of OffAxisActor to 0,0,0: This is what you see.
 
-1. Drag the OffAxisActor in your scene
-2. Update viewport class in Edit->Project Settings->General Settings 
-3. Adjust the four cubes of the OffAxisActor so that they correspond with your desired screen width and height
-4. (You can also adjust the monitor for easier debugging)
+Ok, here's the catch. The cubes of the OffAxisActor do not specifiy the extents of the position of your FishTank Virtual Reality. They specifiy just the height and width. Currently, the origin of the FishTankVR/OffAxisProjection is always at (0,0,0) with the size of width/height specified by the cube ExtentPoint.
+
+
+
+##Input Mappings
+Restart after updating DefaultInput.ini!
+
++ActionMappings=(ActionName="HomePosReset",Key=End,bShift=False,bCtrl=False,bAlt=False,bCmd=False)
++ActionMappings=(ActionName="ToggleOffAxisMethod",Key=SpaceBar,bShift=False,bCtrl=False,bAlt=False,bCmd=False)
++AxisMappings=(AxisName="Up",Key=Up,Scale=1.000000)
++AxisMappings=(AxisName="Up",Key=Down,Scale=-1.000000)
++AxisMappings=(AxisName="Left",Key=Left,Scale=-1.000000)
++AxisMappings=(AxisName="Left",Key=Right,Scale=1.000000)
++AxisMappings=(AxisName="Forward",Key=PageUp,Scale=1.000000)
++AxisMappings=(AxisName="Forward",Key=PageDown,Scale=-1.000000)
+
+## Tips
+Show > Advanced > Camera Frustums
