@@ -60,6 +60,10 @@ extern ENGINE_API UPrimitiveComponent* GDebugSelectedComponent;
 /** The lightmap used by the currently selected component, if it's a static mesh component. */
 extern ENGINE_API class FLightMap2D* GDebugSelectedLightmap;
 
+
+static int OffAxisVersion = 0; //0 = optimized; 1 = default;
+static float EyeOffsetVal = 3.2f;
+
 /**
 * UI Stats
 */
@@ -138,17 +142,31 @@ static FMatrix FrustumMatrix(float left, float right, float bottom, float top, f
 	Result.M[2][0] = (right + left) / (right - left);
 	Result.M[2][1] = (top + bottom) / (top - bottom);
 	Result.M[2][2] = -(farVal + nearVal) / (farVal - nearVal);
+
+	//
+
 	Result.M[3][2] = -(2.0f * farVal * nearVal) / (farVal - nearVal);
 	Result.M[3][3] = 0.0f;
 
 
-	Result.M[2][3] = -1.0f;
+	if (OffAxisVersion == 0)
+	{
 
+		Result.M[2][3] = -1.0f;
+
+	}
+	else
+	{
+
+		Result.M[2][3] = -1.0f;
+
+	}
 	return Result;
 }
 
-static FMatrix GenerateOffAxisMatrix_Internal(float _screenWidth, float _screenHeight, const FVector& _eyeRelativePositon)
+static FMatrix GenerateOffAxisMatrix_Internal(float _screenWidth, float _screenHeight,  FVector _eyeRelativePositon)
 {
+
 	FMatrix result;
 
 	float width = _screenWidth;
@@ -166,6 +184,31 @@ static FMatrix GenerateOffAxisMatrix_Internal(float _screenWidth, float _screenH
 
 	FMatrix OffAxisProjectionMatrix;
 
+	if (OffAxisVersion == 0)
+	{
+		FVector topLeftCorner(-width / 2.f, -height / 2.f, n);
+		FVector bottomRightCorner(width / 2.f, height / 2.f, n);
+
+		FVector eyeToTopLeft = topLeftCorner - _eyeRelativePositon;
+		FVector eyeToTopLeftNear = n / eyeToTopLeft.Z * eyeToTopLeft;
+		FVector eyeToBottomRight = bottomRightCorner - _eyeRelativePositon;
+		FVector eyeToBottomRightNear = eyeToBottomRight / eyeToBottomRight.Z * n;
+
+		l = -eyeToTopLeftNear.X;
+		r = -eyeToBottomRightNear.X;
+		t = -eyeToBottomRightNear.Y;
+		b = -eyeToTopLeftNear.Y;
+
+
+		//Frustum: l, r, b, t, near, far
+		OffAxisProjectionMatrix = FrustumMatrix(l, r, b, t, n, f);
+
+		result =
+			FTranslationMatrix(-_eyeRelativePositon) *
+			OffAxisProjectionMatrix;
+	}
+	else
+	{
 		//this is analog to: http://csc.lsu.edu/~kooima/articles/genperspective/
 
 		//lower left, lower right, upper left, eye pos
@@ -216,7 +259,7 @@ static FMatrix GenerateOffAxisMatrix_Internal(float _screenWidth, float _screenH
 		M2.SetIdentity();
 		M2 = M2.ConcatTranslation(FVector(-pe.X, -pe.Y, -pe.Z));
 		result = M2 * result;
-	
+	}
 
 	// UE_LOG(LogConsoleResponse, Warning, TEXT("lrbtnf: %f, %f, %f, %f, %f, %f"), l, r, b, t, n, f);
 
@@ -233,7 +276,7 @@ static FMatrix GenerateOffAxisMatrix_Internal(float _screenWidth, float _screenH
 	return result;
 }
 
-FMatrix UOffAxisGameViewportClient::GenerateOffAxisMatrix(float _screenWidth, float _screenHeight, const FVector& _eyeRelativePositon)
+FMatrix UOffAxisGameViewportClient::GenerateOffAxisMatrix(float _screenWidth, float _screenHeight, FVector _eyeRelativePositon)
 {
 	return GenerateOffAxisMatrix_Internal(_screenWidth, _screenHeight, _eyeRelativePositon);
 }
@@ -249,6 +292,38 @@ void UOffAxisGameViewportClient::SetOffAxisMatrix(FMatrix OffAxisMatrix)
 	}
 }
 
+void UOffAxisGameViewportClient::ToggleOffAxisMethod()
+{
+	if (OffAxisVersion == 0)
+	{
+		OffAxisVersion = 1;
+	}
+	else
+	{
+		OffAxisVersion = 0;
+	}
+	PrintCurrentOffAxisVersioN();
+}
+
+void UOffAxisGameViewportClient::PrintCurrentOffAxisVersioN()
+{
+	UE_LOG(LogConsoleResponse, Warning, TEXT("OffAxisVersion: %s"), (OffAxisVersion ? TEXT("Basic") : TEXT("Optimized"))); //if true (==1) -> basic, else opitmized
+}
+
+void UOffAxisGameViewportClient::UpdateEyeOffsetForStereo(float _newVal)
+{
+	EyeOffsetVal += _newVal;
+
+	GEngine->AddOnScreenDebugMessage(0, 2, FColor::Red, FString::Printf(TEXT("EyeDistance: %f"), 2 * EyeOffsetVal));
+	
+
+}
+
+void UOffAxisGameViewportClient::ResetEyeOffsetForStereo(float _newVal)
+{
+	EyeOffsetVal = _newVal;
+}
+
 static FMatrix _AdjustProjectionMatrixForRHI(const FMatrix& InProjectionMatrix)
 {
 	const float GMinClipZ = 0.0f;
@@ -259,8 +334,26 @@ static FMatrix _AdjustProjectionMatrixForRHI(const FMatrix& InProjectionMatrix)
 	return InProjectionMatrix * ClipSpaceFixScale * ClipSpaceFixTranslate;
 }
 
-static void UpdateProjectionMatrix(FSceneView* View, FMatrix OffAxisMatrix)
+static void UpdateProjectionMatrix(FSceneView* View, FMatrix OffAxisMatrix, EStereoscopicPass _Pass)
 {
+	FMatrix stereoProjectionMatrix = OffAxisMatrix;
+
+	switch (_Pass)
+	{
+	case eSSP_FULL:
+		break;
+	case eSSP_LEFT_EYE:
+		stereoProjectionMatrix = FTranslationMatrix(FVector(EyeOffsetVal, 0.f, 0.f)) * OffAxisMatrix;
+		break;
+	case eSSP_RIGHT_EYE:
+		stereoProjectionMatrix = FTranslationMatrix(FVector(-EyeOffsetVal, 0.f, 0.f)) * OffAxisMatrix;
+		break;
+	case eSSP_MONOSCOPIC_EYE:
+		break;
+	default:
+		break;
+	}
+	
 	FMatrix axisChanger;
 
 	axisChanger.SetIdentity();
@@ -272,8 +365,8 @@ static void UpdateProjectionMatrix(FSceneView* View, FMatrix OffAxisMatrix)
 	axisChanger.M[1][0] = 1.0f;
 	axisChanger.M[2][1] = 1.0f;
 
-	View->ProjectionMatrixUnadjustedForRHI = View->ViewMatrices.GetViewMatrix().Inverse() * axisChanger * OffAxisMatrix;
-	
+	View->ProjectionMatrixUnadjustedForRHI = View->ViewMatrices.GetViewMatrix().Inverse() * axisChanger * stereoProjectionMatrix;
+
 	FMatrix* pInvViewMatrix = (FMatrix*)(&View->ViewMatrices.GetInvViewMatrix());
 	*pInvViewMatrix = View->ViewMatrices.GetViewMatrix().Inverse();
 
@@ -297,6 +390,7 @@ static void UpdateProjectionMatrix(FSceneView* View, FMatrix OffAxisMatrix)
 	View->ShadowViewMatrices = View->ViewMatrices;
 
 	GetViewFrustumBounds(View->ViewFrustum, View->ViewMatrices.GetViewProjectionMatrix(), false);
+
 }
 
 void UOffAxisGameViewportClient::Draw(FViewport* InViewport, FCanvas* SceneCanvas)
@@ -425,7 +519,7 @@ void UOffAxisGameViewportClient::Draw(FViewport* InViewport, FCanvas* SceneCanva
 				/* OFF-AXIS-MAGIC                                                       */
 				/************************************************************************/
 				if (mOffAxisMatrixSetted)
-					UpdateProjectionMatrix(View, mOffAxisMatrix);
+					UpdateProjectionMatrix(View, mOffAxisMatrix, PassType);
 				/************************************************************************/
 				/* OFF-AXIS-MAGIC                                                       */
 				/************************************************************************/
