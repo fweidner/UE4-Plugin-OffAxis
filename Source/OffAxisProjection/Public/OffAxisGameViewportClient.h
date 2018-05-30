@@ -20,12 +20,6 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "OffAxis")
 		static void SetOffAxisMatrix(FMatrix OffAxisMatrix);
-
-	UFUNCTION(BlueprintCallable, Category = "OffAxis")
-		static void ToggleOffAxisMethod();
-
-	UFUNCTION(BlueprintCallable, Category = "OffAxis")
-		static void PrintCurrentOffAxisVersioN();
 	
 	virtual void Draw(FViewport* Viewport, FCanvas* SceneCanvas) override;
 

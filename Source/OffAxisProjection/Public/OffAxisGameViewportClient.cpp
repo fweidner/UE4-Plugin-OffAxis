@@ -60,9 +60,6 @@ extern ENGINE_API UPrimitiveComponent* GDebugSelectedComponent;
 /** The lightmap used by the currently selected component, if it's a static mesh component. */
 extern ENGINE_API class FLightMap2D* GDebugSelectedLightmap;
 
-
-static int OffAxisVersion = 0; //0 = optimized; 1 = default;
-
 /**
 * UI Stats
 */
@@ -141,25 +138,12 @@ static FMatrix FrustumMatrix(float left, float right, float bottom, float top, f
 	Result.M[2][0] = (right + left) / (right - left);
 	Result.M[2][1] = (top + bottom) / (top - bottom);
 	Result.M[2][2] = -(farVal + nearVal) / (farVal - nearVal);
-
-	//
-
 	Result.M[3][2] = -(2.0f * farVal * nearVal) / (farVal - nearVal);
 	Result.M[3][3] = 0.0f;
 
 
-	if (OffAxisVersion == 0)
-	{
+	Result.M[2][3] = -1.0f;
 
-		Result.M[2][3] = -1.0f;
-
-	}
-	else
-	{
-
-		Result.M[2][3] = -1.0f;
-
-	}
 	return Result;
 }
 
@@ -182,31 +166,6 @@ static FMatrix GenerateOffAxisMatrix_Internal(float _screenWidth, float _screenH
 
 	FMatrix OffAxisProjectionMatrix;
 
-	if (OffAxisVersion == 0)
-	{
-		FVector topLeftCorner(-width / 2.f, -height / 2.f, n);
-		FVector bottomRightCorner(width / 2.f, height / 2.f, n);
-
-		FVector eyeToTopLeft = topLeftCorner - _eyeRelativePositon;
-		FVector eyeToTopLeftNear = n / eyeToTopLeft.Z * eyeToTopLeft;
-		FVector eyeToBottomRight = bottomRightCorner - _eyeRelativePositon;
-		FVector eyeToBottomRightNear = eyeToBottomRight / eyeToBottomRight.Z * n;
-
-		l = -eyeToTopLeftNear.X;
-		r = -eyeToBottomRightNear.X;
-		t = -eyeToBottomRightNear.Y;
-		b = -eyeToTopLeftNear.Y;
-
-
-		//Frustum: l, r, b, t, near, far
-		OffAxisProjectionMatrix = FrustumMatrix(l, r, b, t, n, f);
-
-		result =
-			FTranslationMatrix(-_eyeRelativePositon) *
-			OffAxisProjectionMatrix;
-	}
-	else
-	{
 		//this is analog to: http://csc.lsu.edu/~kooima/articles/genperspective/
 
 		//lower left, lower right, upper left, eye pos
@@ -257,7 +216,7 @@ static FMatrix GenerateOffAxisMatrix_Internal(float _screenWidth, float _screenH
 		M2.SetIdentity();
 		M2 = M2.ConcatTranslation(FVector(-pe.X, -pe.Y, -pe.Z));
 		result = M2 * result;
-	}
+	
 
 	// UE_LOG(LogConsoleResponse, Warning, TEXT("lrbtnf: %f, %f, %f, %f, %f, %f"), l, r, b, t, n, f);
 
@@ -288,24 +247,6 @@ void UOffAxisGameViewportClient::SetOffAxisMatrix(FMatrix OffAxisMatrix)
 		This->mOffAxisMatrixSetted = true;
 		This->mOffAxisMatrix = OffAxisMatrix;
 	}
-}
-
-void UOffAxisGameViewportClient::ToggleOffAxisMethod()
-{
-	if (OffAxisVersion == 0)
-	{
-		OffAxisVersion = 1;
-	}
-	else
-	{
-		OffAxisVersion = 0;
-	}
-	PrintCurrentOffAxisVersioN();
-}
-
-void UOffAxisGameViewportClient::PrintCurrentOffAxisVersioN()
-{
-	UE_LOG(LogConsoleResponse, Warning, TEXT("OffAxisVersion: %s"), (OffAxisVersion ? TEXT("Basic") : TEXT("Optimized"))); //if true (==1) -> basic, else opitmized
 }
 
 static FMatrix _AdjustProjectionMatrixForRHI(const FMatrix& InProjectionMatrix)
