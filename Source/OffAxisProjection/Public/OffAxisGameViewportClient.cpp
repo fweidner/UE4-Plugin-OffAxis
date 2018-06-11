@@ -61,7 +61,7 @@ extern ENGINE_API UPrimitiveComponent* GDebugSelectedComponent;
 extern ENGINE_API class FLightMap2D* GDebugSelectedLightmap;
 
 
-static int OffAxisVersion = 0; //0 = optimized; 1 = default;
+static int OffAxisVersion = 1; //0 = optimized; 1 = default;
 static float EyeOffsetVal = 3.2f;
 
 /**
@@ -142,25 +142,10 @@ static FMatrix FrustumMatrix(float left, float right, float bottom, float top, f
 	Result.M[2][0] = (right + left) / (right - left);
 	Result.M[2][1] = (top + bottom) / (top - bottom);
 	Result.M[2][2] = -(farVal + nearVal) / (farVal - nearVal);
-
-	//
-
+	Result.M[2][3] = -1.0f;
 	Result.M[3][2] = -(2.0f * farVal * nearVal) / (farVal - nearVal);
 	Result.M[3][3] = 0.0f;
 
-
-	if (OffAxisVersion == 0)
-	{
-
-		Result.M[2][3] = -1.0f;
-
-	}
-	else
-	{
-
-		Result.M[2][3] = -1.0f;
-
-	}
 	return Result;
 }
 
@@ -217,35 +202,51 @@ static FMatrix GenerateOffAxisMatrix_Internal(float _screenWidth, float _screenH
 		const FVector pc(-width / 2.0f, height / 2.0f, n);
 		const FVector pe(_eyeRelativePositon.X, _eyeRelativePositon.Y, _eyeRelativePositon.Z);
 
+		GEngine->AddOnScreenDebugMessage(11, 2, FColor::Red, FString::Printf(TEXT("pa: %s"), *pa.ToString()));
+		GEngine->AddOnScreenDebugMessage(12, 2, FColor::Red, FString::Printf(TEXT("pb: %s"), *pb.ToString()));
+		GEngine->AddOnScreenDebugMessage(13, 2, FColor::Red, FString::Printf(TEXT("pc: %s"), *pc.ToString()));
+		GEngine->AddOnScreenDebugMessage(14, 2, FColor::Red, FString::Printf(TEXT("pe: %s"), *pe.ToString()));
+
 		// Compute the screen corner vectors.
-		FVector va, vb, vc; va = pa - pe;
+		FVector va, vb, vc; 
+		va = pa - pe;
 		vb = pb - pe;
 		vc = pc - pe;
 
 		// Compute an orthonormal basis for the screen.
 		FVector vr, vu, vn;
 		vr = pb - pa;
+		vr /= vr.Normalize();
 		vu = pc - pa;
-		vr.Normalize();
-		vu.Normalize();
-
-		vn = FVector::CrossProduct(vr, vu);
-		vn.Normalize();
+		vu /= vu.Normalize();
+		vn = FVector::CrossProduct(vr, vu); 
+		vn /= vn.Normalize();
+		
+		
+		
+		
 
 		// Find the distance from the eye to screen plane.
 		float d = -FVector::DotProduct(va, vn);
+		GEngine->AddOnScreenDebugMessage(10, 2, FColor::Red, FString::Printf(TEXT("Eye-Screen-Distance: %f"), d));
 
+		float nd = n / d;
+		GEngine->AddOnScreenDebugMessage(20, 4, FColor::Red, FString::Printf(TEXT("nd: %f"), nd));
+		
 		// Find the extent of the perpendicular projection.
-		l = FVector::DotProduct(vr, va) * n / d;
-		r = FVector::DotProduct(vr, vb) * n / d;
-		b = FVector::DotProduct(vu, va) * n / d;
-		t = FVector::DotProduct(vu, vc) * n / d;
+		l = FVector::DotProduct(vr, va) * nd;
+		r = FVector::DotProduct(vr, vb) * nd;
+		b = FVector::DotProduct(vu, va) * nd;
+		t = FVector::DotProduct(vu, vc) * nd;
+
+		GEngine->AddOnScreenDebugMessage(30, 4, FColor::Red, FString::Printf(TEXT("Frustum: %f \t %f \t %f \t %f \t %f \t %f \t "), l,r,b,t,n,f));
+
 
 		// Load the perpendicular projection.
 		result = FrustumMatrix(l, r, b, t, n, f);
 
 		// Rotate the projection to be non-perpendicular. 
-		// This is currently unused until the screen is unused.
+		// This is currently unused until the screen is used.
 		FMatrix M;
 		M.SetIdentity();
 		M.M[0][0] = vr.X; M.M[0][1] = vr.Y; M.M[0][2] = vr.Z;
@@ -257,15 +258,13 @@ static FMatrix GenerateOffAxisMatrix_Internal(float _screenWidth, float _screenH
 		// Move the apex of the frustum to the origin.
 		FMatrix M2;
 		M2.SetIdentity();
-		M2 = M2.ConcatTranslation(FVector(-pe.X, -pe.Y, -pe.Z));
+		M2 = M2.ConcatTranslation(FVector(-pe.X, -pe.Y,  -pe.Z));
 		result = M2 * result;
 	}
 
-	// UE_LOG(LogConsoleResponse, Warning, TEXT("lrbtnf: %f, %f, %f, %f, %f, %f"), l, r, b, t, n, f);
-
-
 	result *= matFlipZ;
 
+	
 	result.M[2][2] = 0.0f;
 	result.M[3][0] = 0.0f;
 	result.M[3][1] = 0.0f;
@@ -366,6 +365,10 @@ static void UpdateProjectionMatrix(FSceneView* View, FMatrix OffAxisMatrix, ESte
 	axisChanger.M[2][1] = 1.0f;
 
 	View->ProjectionMatrixUnadjustedForRHI = View->ViewMatrices.GetViewMatrix().Inverse() * axisChanger * stereoProjectionMatrix;
+
+	
+	GEngine->AddOnScreenDebugMessage(0, 2, FColor::Red, FString::Printf(TEXT("View->NearClippingDistance: %f"), View->NearClippingDistance));
+
 
 	FMatrix* pInvViewMatrix = (FMatrix*)(&View->ViewMatrices.GetInvViewMatrix());
 	*pInvViewMatrix = View->ViewMatrices.GetViewMatrix().Inverse();
