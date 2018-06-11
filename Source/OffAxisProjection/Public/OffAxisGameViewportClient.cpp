@@ -202,10 +202,10 @@ static FMatrix GenerateOffAxisMatrix_Internal(float _screenWidth, float _screenH
 		const FVector pc(-width / 2.0f, height / 2.0f, n);
 		const FVector pe(_eyeRelativePositon.X, _eyeRelativePositon.Y, _eyeRelativePositon.Z);
 
-		GEngine->AddOnScreenDebugMessage(11, 2, FColor::Cyan, FString::Printf(TEXT("pa: %s"), *pa.ToString()));
-		GEngine->AddOnScreenDebugMessage(12, 2, FColor::Cyan, FString::Printf(TEXT("pb: %s"), *pb.ToString()));
-		GEngine->AddOnScreenDebugMessage(13, 2, FColor::Cyan, FString::Printf(TEXT("pc: %s"), *pc.ToString()));
-		GEngine->AddOnScreenDebugMessage(14, 2, FColor::Cyan, FString::Printf(TEXT("pe: %s"), *pe.ToString()));
+		GEngine->AddOnScreenDebugMessage(11, 2, FColor::Red, FString::Printf(TEXT("pa: %s"), *pa.ToString()));
+		GEngine->AddOnScreenDebugMessage(12, 2, FColor::Red, FString::Printf(TEXT("pb: %s"), *pb.ToString()));
+		GEngine->AddOnScreenDebugMessage(13, 2, FColor::Red, FString::Printf(TEXT("pc: %s"), *pc.ToString()));
+		GEngine->AddOnScreenDebugMessage(14, 2, FColor::Red, FString::Printf(TEXT("pe: %s"), *pe.ToString()));
 
 		// Compute the screen corner vectors.
 		FVector va, vb, vc; 
@@ -221,13 +221,17 @@ static FMatrix GenerateOffAxisMatrix_Internal(float _screenWidth, float _screenH
 		vu /= vu.Normalize();
 		vn = FVector::CrossProduct(vr, vu); 
 		vn /= vn.Normalize();
+		
+		
+		
+		
 
 		// Find the distance from the eye to screen plane.
 		float d = -FVector::DotProduct(va, vn);
-		GEngine->AddOnScreenDebugMessage(10, 2, FColor::Cyan, FString::Printf(TEXT("Eye-Screen-Distance: %f"), d));
+		GEngine->AddOnScreenDebugMessage(10, 2, FColor::Red, FString::Printf(TEXT("Eye-Screen-Distance: %f"), d));
 
 		float nd = n / d;
-		GEngine->AddOnScreenDebugMessage(20, 4, FColor::Cyan, FString::Printf(TEXT("nd: %f"), nd));
+		GEngine->AddOnScreenDebugMessage(20, 4, FColor::Red, FString::Printf(TEXT("nd: %f"), nd));
 		
 		// Find the extent of the perpendicular projection.
 		l = FVector::DotProduct(vr, va) * nd;
@@ -235,7 +239,8 @@ static FMatrix GenerateOffAxisMatrix_Internal(float _screenWidth, float _screenH
 		b = FVector::DotProduct(vu, va) * nd;
 		t = FVector::DotProduct(vu, vc) * nd;
 
-		GEngine->AddOnScreenDebugMessage(30, 4, FColor::Cyan, FString::Printf(TEXT("Frustum: %f \t %f \t %f \t %f \t %f \t %f \t "), l,r,b,t,n,f));
+		GEngine->AddOnScreenDebugMessage(30, 4, FColor::Red, FString::Printf(TEXT("Frustum: %f \t %f \t %f \t %f \t %f \t %f \t "), l,r,b,t,n,f));
+
 
 		// Load the perpendicular projection.
 		result = FrustumMatrix(l, r, b, t, n, f);
@@ -361,7 +366,7 @@ static void UpdateProjectionMatrix(FSceneView* View, FMatrix OffAxisMatrix, ESte
 	View->ProjectionMatrixUnadjustedForRHI = View->ViewMatrices.GetViewMatrix().Inverse() * axisChanger * stereoProjectionMatrix;
 
 	
-	GEngine->AddOnScreenDebugMessage(0, 2, FColor::Cyan, FString::Printf(TEXT("View->NearClippingDistance: %f"), View->NearClippingDistance));
+	GEngine->AddOnScreenDebugMessage(0, 2, FColor::Red, FString::Printf(TEXT("View->NearClippingDistance: %f"), View->NearClippingDistance));
 
 
 	FMatrix* pInvViewMatrix = (FMatrix*)(&View->ViewMatrices.GetInvViewMatrix());
