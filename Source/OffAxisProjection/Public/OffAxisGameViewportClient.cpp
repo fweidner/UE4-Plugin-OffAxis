@@ -149,7 +149,7 @@ static FMatrix FrustumMatrix(float left, float right, float bottom, float top, f
 	return Result;
 }
 
-static FMatrix GenerateOffAxisMatrix_Internal(float _screenWidth, float _screenHeight,  FVector _eyeRelativePositon)
+static FMatrix GenerateOffAxisMatrix_Internal(float _screenWidth, float _screenHeight,  FVector _eyeRelativePositon, FVector _tmp)
 {
 
 	FMatrix result;
@@ -197,9 +197,9 @@ static FMatrix GenerateOffAxisMatrix_Internal(float _screenWidth, float _screenH
 		//this is analog to: http://csc.lsu.edu/~kooima/articles/genperspective/
 
 		//lower left, lower right, upper left, eye pos
-		const FVector pa(-width / 2.0f, -height / 2.0f, n);
-		const FVector pb(width / 2.0f, -height / 2.0f, n);
-		const FVector pc(-width / 2.0f, height / 2.0f, n);
+		const FVector pa(-width / 2.0f, -height / 2.0f, _tmp.Z);
+		const FVector pb(width / 2.0f, -height / 2.0f, _tmp.Z);
+		const FVector pc(-width / 2.0f, height / 2.0f, _tmp.Z);
 		const FVector pe(_eyeRelativePositon.X, _eyeRelativePositon.Y, _eyeRelativePositon.Z);
 
 		GEngine->AddOnScreenDebugMessage(11, 2, FColor::Red, FString::Printf(TEXT("pa: %s"), *pa.ToString()));
@@ -222,10 +222,6 @@ static FMatrix GenerateOffAxisMatrix_Internal(float _screenWidth, float _screenH
 		vn = FVector::CrossProduct(vr, vu); 
 		vn /= vn.Normalize();
 		
-		
-		
-		
-
 		// Find the distance from the eye to screen plane.
 		float d = -FVector::DotProduct(va, vn);
 		GEngine->AddOnScreenDebugMessage(10, 2, FColor::Red, FString::Printf(TEXT("Eye-Screen-Distance: %f"), d));
@@ -275,9 +271,9 @@ static FMatrix GenerateOffAxisMatrix_Internal(float _screenWidth, float _screenH
 	return result;
 }
 
-FMatrix UOffAxisGameViewportClient::GenerateOffAxisMatrix(float _screenWidth, float _screenHeight, FVector _eyeRelativePositon)
+FMatrix UOffAxisGameViewportClient::GenerateOffAxisMatrix(float _screenWidth, float _screenHeight, FVector _eyeRelativePositon, FVector _tmp)
 {
-	return GenerateOffAxisMatrix_Internal(_screenWidth, _screenHeight, _eyeRelativePositon);
+	return GenerateOffAxisMatrix_Internal(_screenWidth, _screenHeight, _eyeRelativePositon, _tmp);
 }
 
 void UOffAxisGameViewportClient::SetOffAxisMatrix(FMatrix OffAxisMatrix)
