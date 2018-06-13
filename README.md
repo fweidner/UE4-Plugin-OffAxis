@@ -1,6 +1,6 @@
 # UE4-Plugin-OffAxis
 
-![OffAxisExample](https://thumbs.gfycat.com/VastFewFruitfly-max-14mb.gif)
+![OffAxisExample](https://github.com/fweidner/UE4-Plugin-OffAxis/blob/master/2018-06-13.gif)
 
 
 
