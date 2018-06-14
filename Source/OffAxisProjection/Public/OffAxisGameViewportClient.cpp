@@ -157,17 +157,15 @@ static FMatrix GenerateOffAxisMatrix_Internal(float _screenWidth, float _screenH
 	float width = _screenWidth;
 	float height = _screenHeight;
 
-	float l, r, b, t, n, f;
+	float l, r, b, t, n, f, nd;
 
 	n = GNearClippingPlane;
-	f = 12000.f;
+	f = 4000.f;
 
 	FMatrix matFlipZ;
 	matFlipZ.SetIdentity();
-	matFlipZ.M[2][2] = -1.0f;
-	matFlipZ.M[3][2] = 1.0f;
 
-	FMatrix OffAxisProjectionMatrix;
+	//FMatrix OffAxisProjectionMatrix;
 
 	if (OffAxisVersion == 0)
 	{
@@ -186,20 +184,20 @@ static FMatrix GenerateOffAxisMatrix_Internal(float _screenWidth, float _screenH
 
 
 		//Frustum: l, r, b, t, near, far
-		OffAxisProjectionMatrix = FrustumMatrix(l, r, b, t, n, f);
+		result = FrustumMatrix(l, r, b, t, n, f);
 
-		result =
-			FTranslationMatrix(-_eyeRelativePositon) *
-			OffAxisProjectionMatrix;
+	
 	}
 	else
 	{
 		//this is analog to: http://csc.lsu.edu/~kooima/articles/genperspective/
 
+		//Careful: coordinate system! left-handed, y-up
+
 		//lower left, lower right, upper left, eye pos
-		const FVector pa(-width / 2.0f, -height / 2.0f, _tmp.Z);
-		const FVector pb(width / 2.0f, -height / 2.0f, _tmp.Z);
-		const FVector pc(-width / 2.0f, height / 2.0f, _tmp.Z);
+		const FVector pa(-width / 2.0f, -height / 2.0f, n);
+		const FVector pb(width / 2.0f, -height / 2.0f, n);
+		const FVector pc(-width / 2.0f, height / 2.0f, n);
 		const FVector pe(_eyeRelativePositon.X, _eyeRelativePositon.Y, _eyeRelativePositon.Z);
 
 		GEngine->AddOnScreenDebugMessage(11, 2, FColor::Red, FString::Printf(TEXT("pa: %s"), *pa.ToString()));
@@ -226,7 +224,7 @@ static FMatrix GenerateOffAxisMatrix_Internal(float _screenWidth, float _screenH
 		float d = -FVector::DotProduct(va, vn);
 		GEngine->AddOnScreenDebugMessage(10, 2, FColor::Red, FString::Printf(TEXT("Eye-Screen-Distance: %f"), d));
 
-		float nd = n / d;
+		nd = n / d;
 		GEngine->AddOnScreenDebugMessage(20, 4, FColor::Red, FString::Printf(TEXT("nd: %f"), nd));
 		
 		// Find the extent of the perpendicular projection.
@@ -240,6 +238,9 @@ static FMatrix GenerateOffAxisMatrix_Internal(float _screenWidth, float _screenH
 
 		// Load the perpendicular projection.
 		result = FrustumMatrix(l, r, b, t, n, f);
+		GEngine->AddOnScreenDebugMessage(40, 2, FColor::Red, FString::Printf(TEXT("FrustumMatrix_ORIG: %s"), *result.ToString()));
+
+
 
 		// Rotate the projection to be non-perpendicular. 
 		// This is currently unused until the screen is used.
@@ -251,22 +252,22 @@ static FMatrix GenerateOffAxisMatrix_Internal(float _screenWidth, float _screenH
 		M.M[3][3] = 1.0f;
 		result = result * M;
 
-		// Move the apex of the frustum to the origin.
-		FMatrix M2;
-		M2.SetIdentity();
-		M2 = M2.ConcatTranslation(FVector(-pe.X, -pe.Y,  -pe.Z));
-		result = M2 * result;
-	}
 
-	result *= matFlipZ;
 
+	}	
 	
-	result.M[2][2] = 0.0f;
-	result.M[3][0] = 0.0f;
-	result.M[3][1] = 0.0f;
+	// Move the apex of the frustum to the origin.
+	result = FTranslationMatrix(-_eyeRelativePositon) * result;
+	GEngine->AddOnScreenDebugMessage(41, 2, FColor::Red, FString::Printf(TEXT("FrustumMatrix_MOV: %s"), *result.ToString()));
 
-	result *= 1.0f / result.M[0][0];
-	result.M[3][2] = n;
+	//scales matrix for UE4 and RHI
+	result *= 1.0f / result.M[0][0]; 
+	GEngine->AddOnScreenDebugMessage(42, 2, FColor::Red, FString::Printf(TEXT("FrustumMatrix_DIV: %s"), *result.ToString()));
+
+	result.M[2][2] = 0.f; //?
+	result.M[3][2] = n; //?
+
+	GEngine->AddOnScreenDebugMessage(49, 2, FColor::Red, FString::Printf(TEXT("FrustumMatrix_MOD : %s"), *result.ToString()));
 
 	return result;
 }
@@ -320,7 +321,7 @@ void UOffAxisGameViewportClient::ResetEyeOffsetForStereo(float _newVal)
 
 static FMatrix _AdjustProjectionMatrixForRHI(const FMatrix& InProjectionMatrix)
 {
-	const float GMinClipZ = 0.0f;
+	const float GMinClipZ = GNearClippingPlane;
 	const float GProjectionSignY = 1.0f;
 
 	FScaleMatrix ClipSpaceFixScale(FVector(1.0f, GProjectionSignY, 1.0f - GMinClipZ));
@@ -348,7 +349,7 @@ static void UpdateProjectionMatrix(FSceneView* View, FMatrix OffAxisMatrix, ESte
 		break;
 	}
 	
-	FMatrix axisChanger;
+	FMatrix axisChanger; //rotates everything.
 
 	axisChanger.SetIdentity();
 	axisChanger.M[0][0] = 0.0f;
@@ -361,34 +362,8 @@ static void UpdateProjectionMatrix(FSceneView* View, FMatrix OffAxisMatrix, ESte
 
 	View->ProjectionMatrixUnadjustedForRHI = View->ViewMatrices.GetViewMatrix().Inverse() * axisChanger * stereoProjectionMatrix;
 
-	
-	GEngine->AddOnScreenDebugMessage(0, 2, FColor::Red, FString::Printf(TEXT("View->NearClippingDistance: %f"), View->NearClippingDistance));
-
-
-	FMatrix* pInvViewMatrix = (FMatrix*)(&View->ViewMatrices.GetInvViewMatrix());
-	*pInvViewMatrix = View->ViewMatrices.GetViewMatrix().Inverse();
-
 	FMatrix* pProjectionMatrix = (FMatrix*)(&View->ViewMatrices.GetProjectionMatrix());
 	*pProjectionMatrix = _AdjustProjectionMatrixForRHI(View->ProjectionMatrixUnadjustedForRHI);
-
-	FMatrix TranslatedViewMatrix = FTranslationMatrix(-View->ViewMatrices.GetPreViewTranslation()) * View->ViewMatrices.GetViewMatrix();
-
-	FVector* pPreViewTranslation = (FVector*)(&View->ViewMatrices.GetPreViewTranslation());
-	*pPreViewTranslation = -View->ViewMatrices.GetViewOrigin();
-
-	FMatrix* pTranslatedViewMatrix = (FMatrix*)(&View->ViewMatrices.GetTranslatedViewMatrix());
-
-	FMatrix* pTranslatedViewProjectionMatrix = (FMatrix*)(&View->ViewMatrices.GetTranslatedViewProjectionMatrix());
-	*pTranslatedViewProjectionMatrix = TranslatedViewMatrix * View->ViewMatrices.GetProjectionMatrix();
-
-	FMatrix* pInvTranslatedViewProjectionMatrixx = (FMatrix*)(&View->ViewMatrices.GetInvTranslatedViewProjectionMatrix());
-	*pInvTranslatedViewProjectionMatrixx = View->ViewMatrices.GetTranslatedViewProjectionMatrix().Inverse();
-
-
-	View->ShadowViewMatrices = View->ViewMatrices;
-
-	GetViewFrustumBounds(View->ViewFrustum, View->ViewMatrices.GetViewProjectionMatrix(), false);
-
 }
 
 void UOffAxisGameViewportClient::Draw(FViewport* InViewport, FCanvas* SceneCanvas)
