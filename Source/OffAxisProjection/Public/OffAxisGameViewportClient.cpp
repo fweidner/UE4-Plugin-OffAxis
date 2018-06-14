@@ -365,29 +365,29 @@ static void UpdateProjectionMatrix(FSceneView* View, FMatrix OffAxisMatrix, ESte
 	GEngine->AddOnScreenDebugMessage(0, 2, FColor::Red, FString::Printf(TEXT("View->NearClippingDistance: %f"), View->NearClippingDistance));
 
 
-	FMatrix* pInvViewMatrix = (FMatrix*)(&View->ViewMatrices.GetInvViewMatrix());
-	*pInvViewMatrix = View->ViewMatrices.GetViewMatrix().Inverse();
+// 	FMatrix* pInvViewMatrix = (FMatrix*)(&View->ViewMatrices.GetInvViewMatrix());
+// 	*pInvViewMatrix = View->ViewMatrices.GetViewMatrix().Inverse();
 
 	FMatrix* pProjectionMatrix = (FMatrix*)(&View->ViewMatrices.GetProjectionMatrix());
 	*pProjectionMatrix = _AdjustProjectionMatrixForRHI(View->ProjectionMatrixUnadjustedForRHI);
 
-	FMatrix TranslatedViewMatrix = FTranslationMatrix(-View->ViewMatrices.GetPreViewTranslation()) * View->ViewMatrices.GetViewMatrix();
+// 	FMatrix TranslatedViewMatrix = FTranslationMatrix(-View->ViewMatrices.GetPreViewTranslation()) * View->ViewMatrices.GetViewMatrix();
+// 
+// 	FVector* pPreViewTranslation = (FVector*)(&View->ViewMatrices.GetPreViewTranslation());
+// 	*pPreViewTranslation = -View->ViewMatrices.GetViewOrigin();
+// 
+// 	FMatrix* pTranslatedViewMatrix = (FMatrix*)(&View->ViewMatrices.GetTranslatedViewMatrix());
+// 
+// 	FMatrix* pTranslatedViewProjectionMatrix = (FMatrix*)(&View->ViewMatrices.GetTranslatedViewProjectionMatrix());
+// 	*pTranslatedViewProjectionMatrix = TranslatedViewMatrix * View->ViewMatrices.GetProjectionMatrix();
+// 
+// 	FMatrix* pInvTranslatedViewProjectionMatrixx = (FMatrix*)(&View->ViewMatrices.GetInvTranslatedViewProjectionMatrix());
+// 	*pInvTranslatedViewProjectionMatrixx = View->ViewMatrices.GetTranslatedViewProjectionMatrix().Inverse();
 
-	FVector* pPreViewTranslation = (FVector*)(&View->ViewMatrices.GetPreViewTranslation());
-	*pPreViewTranslation = -View->ViewMatrices.GetViewOrigin();
 
-	FMatrix* pTranslatedViewMatrix = (FMatrix*)(&View->ViewMatrices.GetTranslatedViewMatrix());
+//	View->ShadowViewMatrices = View->ViewMatrices;
 
-	FMatrix* pTranslatedViewProjectionMatrix = (FMatrix*)(&View->ViewMatrices.GetTranslatedViewProjectionMatrix());
-	*pTranslatedViewProjectionMatrix = TranslatedViewMatrix * View->ViewMatrices.GetProjectionMatrix();
-
-	FMatrix* pInvTranslatedViewProjectionMatrixx = (FMatrix*)(&View->ViewMatrices.GetInvTranslatedViewProjectionMatrix());
-	*pInvTranslatedViewProjectionMatrixx = View->ViewMatrices.GetTranslatedViewProjectionMatrix().Inverse();
-
-
-	View->ShadowViewMatrices = View->ViewMatrices;
-
-	GetViewFrustumBounds(View->ViewFrustum, View->ViewMatrices.GetViewProjectionMatrix(), false);
+//	GetViewFrustumBounds(View->ViewFrustum, View->ViewMatrices.GetViewProjectionMatrix(), false);
 
 }
 
