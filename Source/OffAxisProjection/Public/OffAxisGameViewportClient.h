@@ -32,7 +32,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "OffAxis")
 		static void SetHeight(float _height);
 
-
 	UFUNCTION(BlueprintCallable, Category = "OffAxis")
 		static void ToggleOffAxisMethod();
 
@@ -43,7 +42,13 @@ public:
 		static void UpdateEyeOffsetForStereo(float _newVal);
 
 	UFUNCTION(BlueprintCallable, Category = "OffAxis")
-		static void ResetEyeOffsetForStereo(float _newVal = 3.2f);
+		static void UpdateProjectionPlaneOffsetForStereo(float _newVal);
+
+	UFUNCTION(BlueprintCallable, Category = "OffAxis")
+		static void ResetProjectionPlaneOffsetForStereo(float _newVal = 0.f);
+
+	UFUNCTION(BlueprintCallable, Category = "OffAxis")
+		static void ResetEyeOffsetForStereo(float _newVal = 3.2000005f);
 
 
 	virtual void Draw(FViewport* Viewport, FCanvas* SceneCanvas) override;

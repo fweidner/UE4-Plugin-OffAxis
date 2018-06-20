@@ -62,7 +62,7 @@ extern ENGINE_API class FLightMap2D* GDebugSelectedLightmap;
 
 
 static int s_OffAxisVersion = 1; //0 = optimized; 1 = default;
-static float s_EyeOffsetVal = 3.25f;
+static float s_EyeOffsetVal = 3.2000005f;
 static float s_ProjectionPlaneOffset = 0.f;
 static FVector s_EyePosition;
 static float s_Width = 0.f;
@@ -351,7 +351,18 @@ void UOffAxisGameViewportClient::UpdateEyeOffsetForStereo(float _newVal)
 {
 	s_EyeOffsetVal += _newVal;
 
-	GEngine->AddOnScreenDebugMessage(0, 2, FColor::Cyan, FString::Printf(TEXT("EyeDistance: %f"), 2 * s_EyeOffsetVal));
+	GEngine->AddOnScreenDebugMessage(40, 2, FColor::Cyan, FString::Printf(TEXT("EyeDistance: %f"), 2 * s_EyeOffsetVal));
+}
+
+void UOffAxisGameViewportClient::UpdateProjectionPlaneOffsetForStereo(float _newVal)
+{
+	s_ProjectionPlaneOffset += _newVal;
+	GEngine->AddOnScreenDebugMessage(50, 2, FColor::Cyan, FString::Printf(TEXT("ProjectionPlaneOffset: %f"), s_ProjectionPlaneOffset));
+}
+
+void UOffAxisGameViewportClient::ResetProjectionPlaneOffsetForStereo(float _newVal /*= 0.f*/)
+{
+	s_ProjectionPlaneOffset = _newVal;
 }
 
 void UOffAxisGameViewportClient::ResetEyeOffsetForStereo(float _newVal)
@@ -373,21 +384,21 @@ static void UpdateProjectionMatrix(FSceneView* View, FMatrix OffAxisMatrix, ESte
 {
 	FMatrix stereoProjectionMatrix = OffAxisMatrix;
 
-// 	switch (_Pass)
-// 	{
-// 	case eSSP_FULL:
-// 		break;
-// 	case eSSP_LEFT_EYE:
-// 		stereoProjectionMatrix = FTranslationMatrix(FVector(EyeOffsetVal, 0.f, 0.f)) * OffAxisMatrix;
-// 		break;
-// 	case eSSP_RIGHT_EYE:
-// 		stereoProjectionMatrix = FTranslationMatrix(FVector(-EyeOffsetVal, 0.f, 0.f)) * OffAxisMatrix;
-// 		break;
-// 	case eSSP_MONOSCOPIC_EYE:
-// 		break;
-// 	default:
-// 		break;
-// 	}
+	switch (_Pass)
+	{
+	case eSSP_FULL:
+		break;
+	case eSSP_LEFT_EYE:
+		stereoProjectionMatrix = FTranslationMatrix(FVector(s_ProjectionPlaneOffset, 0.f, 0.f)) * OffAxisMatrix;
+		break;
+	case eSSP_RIGHT_EYE:
+		stereoProjectionMatrix = FTranslationMatrix(FVector(-s_ProjectionPlaneOffset, 0.f, 0.f)) * OffAxisMatrix;
+		break;
+	case eSSP_MONOSCOPIC_EYE:
+		break;
+	default:
+		break;
+	}
 	
 	FMatrix axisChanger; //rotates everything.
 
