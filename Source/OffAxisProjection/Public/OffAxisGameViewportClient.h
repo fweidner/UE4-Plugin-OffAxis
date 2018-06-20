@@ -15,11 +15,23 @@ class UOffAxisGameViewportClient : public UGameViewportClient
 
 public:
 
+	FMatrix GenerateOffAxisMatrix(float _screenWidth, float _screenHeight, FVector _eyeRelativePositon, EStereoscopicPass _PassType);
+
 	UFUNCTION(BlueprintCallable, Category = "OffAxis")
 		static FMatrix GenerateOffAxisMatrix(float _screenWidth, float _screenHeight,  FVector _eyeRelativePositon, FVector _tmp);
 
 	UFUNCTION(BlueprintCallable, Category = "OffAxis")
-		static void SetOffAxisMatrix(FMatrix OffAxisMatrix);
+	static void SetOffAxisMatrix(FMatrix OffAxisMatrix);
+
+	UFUNCTION(BlueprintCallable, Category = "OffAxis")
+		static void UpdateEyeRelativePosition(FVector _eyeRelativePosition);
+
+	UFUNCTION(BlueprintCallable, Category = "OffAxis")
+		static void SetWidth(float _width);
+
+	UFUNCTION(BlueprintCallable, Category = "OffAxis")
+		static void SetHeight(float _height);
+
 
 	UFUNCTION(BlueprintCallable, Category = "OffAxis")
 		static void ToggleOffAxisMethod();

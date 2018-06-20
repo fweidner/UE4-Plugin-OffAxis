@@ -62,8 +62,10 @@ extern ENGINE_API class FLightMap2D* GDebugSelectedLightmap;
 
 
 static int OffAxisVersion = 1; //0 = optimized; 1 = default;
-static float EyeOffsetVal = 3.2f;
-
+static float EyeOffsetVal = 3.25f;
+static FVector EyePosition;
+static float WIDTH = 0.f;
+static float HEIGHT = 0.f;
 /**
 * UI Stats
 */
@@ -165,6 +167,8 @@ static FMatrix GenerateOffAxisMatrix_Internal(float _screenWidth, float _screenH
 	FMatrix matFlipZ;
 	matFlipZ.SetIdentity();
 
+	FVector eyePosition = _eyeRelativePositon;
+
 	//FMatrix OffAxisProjectionMatrix;
 
 	if (OffAxisVersion == 0)
@@ -194,11 +198,14 @@ static FMatrix GenerateOffAxisMatrix_Internal(float _screenWidth, float _screenH
 
 		//Careful: coordinate system! left-handed, y-up
 
+		float EyeOffset = 3.20000005f;
+
+
 		//lower left, lower right, upper left, eye pos
 		const FVector pa(-width / 2.0f, -height / 2.0f, n);
 		const FVector pb(width / 2.0f, -height / 2.0f, n);
 		const FVector pc(-width / 2.0f, height / 2.0f, n);
-		const FVector pe(_eyeRelativePositon.X, _eyeRelativePositon.Y, _eyeRelativePositon.Z);
+		const FVector pe(eyePosition.X, eyePosition.Y, eyePosition.Z);
 
 		GEngine->AddOnScreenDebugMessage(11, 2, FColor::Red, FString::Printf(TEXT("pa: %s"), *pa.ToString()));
 		GEngine->AddOnScreenDebugMessage(12, 2, FColor::Red, FString::Printf(TEXT("pb: %s"), *pb.ToString()));
@@ -257,7 +264,7 @@ static FMatrix GenerateOffAxisMatrix_Internal(float _screenWidth, float _screenH
 	}	
 	
 	// Move the apex of the frustum to the origin.
-	result = FTranslationMatrix(-_eyeRelativePositon) * result;
+	result = FTranslationMatrix(-eyePosition) * result;
 	GEngine->AddOnScreenDebugMessage(41, 2, FColor::Red, FString::Printf(TEXT("FrustumMatrix_MOV: %s"), *result.ToString()));
 
 	//scales matrix for UE4 and RHI
@@ -279,6 +286,29 @@ FMatrix UOffAxisGameViewportClient::GenerateOffAxisMatrix(float _screenWidth, fl
 	return GenerateOffAxisMatrix_Internal(_screenWidth, _screenHeight, _eyeRelativePositon, _tmp);
 }
 
+FMatrix UOffAxisGameViewportClient::GenerateOffAxisMatrix(float _screenWidth, float _screenHeight, FVector _eyeRelativePositon, EStereoscopicPass _PassType)
+{
+	FVector tmpeye = _eyeRelativePositon;
+	switch (_PassType)
+	{
+	case eSSP_FULL:
+		break;
+	case eSSP_LEFT_EYE:
+		tmpeye += FVector(EyeOffsetVal, 0.f, 0.f);
+		break;
+	case eSSP_RIGHT_EYE:
+		tmpeye -= FVector(EyeOffsetVal, 0.f, 0.f);
+		break;
+	case eSSP_MONOSCOPIC_EYE:
+		break;
+	default:
+		break;
+	}
+
+
+	return GenerateOffAxisMatrix(_screenWidth, _screenHeight, tmpeye, FVector(0.f,0.f,0.f));
+}
+
 void UOffAxisGameViewportClient::SetOffAxisMatrix(FMatrix OffAxisMatrix)
 {
 	auto This = Cast<UOffAxisGameViewportClient>(GEngine->GameViewport);
@@ -288,6 +318,21 @@ void UOffAxisGameViewportClient::SetOffAxisMatrix(FMatrix OffAxisMatrix)
 		This->mOffAxisMatrixSetted = true;
 		This->mOffAxisMatrix = OffAxisMatrix;
 	}
+}
+
+void UOffAxisGameViewportClient::UpdateEyeRelativePosition(FVector _eyeRelativePosition)
+{
+	EyePosition = _eyeRelativePosition;
+}
+
+void UOffAxisGameViewportClient::SetWidth(float _width)
+{
+	WIDTH = _width; 
+}
+
+void UOffAxisGameViewportClient::SetHeight(float _height)
+{
+	HEIGHT = _height;
 }
 
 void UOffAxisGameViewportClient::ToggleOffAxisMethod()
@@ -335,21 +380,21 @@ static void UpdateProjectionMatrix(FSceneView* View, FMatrix OffAxisMatrix, ESte
 {
 	FMatrix stereoProjectionMatrix = OffAxisMatrix;
 
-	switch (_Pass)
-	{
-	case eSSP_FULL:
-		break;
-	case eSSP_LEFT_EYE:
-		stereoProjectionMatrix = FTranslationMatrix(FVector(EyeOffsetVal, 0.f, 0.f)) * OffAxisMatrix;
-		break;
-	case eSSP_RIGHT_EYE:
-		stereoProjectionMatrix = FTranslationMatrix(FVector(-EyeOffsetVal, 0.f, 0.f)) * OffAxisMatrix;
-		break;
-	case eSSP_MONOSCOPIC_EYE:
-		break;
-	default:
-		break;
-	}
+// 	switch (_Pass)
+// 	{
+// 	case eSSP_FULL:
+// 		break;
+// 	case eSSP_LEFT_EYE:
+// 		stereoProjectionMatrix = FTranslationMatrix(FVector(EyeOffsetVal, 0.f, 0.f)) * OffAxisMatrix;
+// 		break;
+// 	case eSSP_RIGHT_EYE:
+// 		stereoProjectionMatrix = FTranslationMatrix(FVector(-EyeOffsetVal, 0.f, 0.f)) * OffAxisMatrix;
+// 		break;
+// 	case eSSP_MONOSCOPIC_EYE:
+// 		break;
+// 	default:
+// 		break;
+// 	}
 	
 	FMatrix axisChanger; //rotates everything.
 
@@ -493,11 +538,14 @@ void UOffAxisGameViewportClient::Draw(FViewport* InViewport, FCanvas* SceneCanva
 				/************************************************************************/
 				/* OFF-AXIS-MAGIC                                                       */
 				/************************************************************************/
-				if (mOffAxisMatrixSetted)
-					UpdateProjectionMatrix(View, mOffAxisMatrix, PassType);
+				//if (mOffAxisMatrixSetted)
+				//	UpdateProjectionMatrix(View, mOffAxisMatrix, PassType);
 				/************************************************************************/
 				/* OFF-AXIS-MAGIC                                                       */
 				/************************************************************************/
+
+				SetOffAxisMatrix(GenerateOffAxisMatrix(WIDTH, HEIGHT, EyePosition, PassType));
+				UpdateProjectionMatrix(View, mOffAxisMatrix, PassType);
 
 				if (View)
 				{
