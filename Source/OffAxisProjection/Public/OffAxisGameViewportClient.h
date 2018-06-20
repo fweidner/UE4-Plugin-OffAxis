@@ -18,7 +18,7 @@ public:
 	FMatrix GenerateOffAxisMatrix(float _screenWidth, float _screenHeight, FVector _eyeRelativePositon, EStereoscopicPass _PassType);
 
 	UFUNCTION(BlueprintCallable, Category = "OffAxis")
-		static FMatrix GenerateOffAxisMatrix(float _screenWidth, float _screenHeight,  FVector _eyeRelativePositon, FVector _tmp);
+		static FMatrix GenerateOffAxisMatrix(float _screenWidth, float _screenHeight,  FVector _eyeRelativePositon);
 
 	UFUNCTION(BlueprintCallable, Category = "OffAxis")
 	static void SetOffAxisMatrix(FMatrix OffAxisMatrix);
