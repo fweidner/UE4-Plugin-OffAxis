@@ -246,7 +246,7 @@ static FMatrix GenerateOffAxisMatrix_Internal(float _screenWidth, float _screenH
 
 		// Load the perpendicular projection.
 		result = FrustumMatrix(l, r, b, t, n, f);
-		GEngine->AddOnScreenDebugMessage(40, 2, FColor::Red, FString::Printf(TEXT("FrustumMatrix_ORIG: %s"), *result.ToString()));
+		//GEngine->AddOnScreenDebugMessage(40, 2, FColor::Red, FString::Printf(TEXT("FrustumMatrix_ORIG: %s"), *result.ToString()));
 
 
 
@@ -263,16 +263,16 @@ static FMatrix GenerateOffAxisMatrix_Internal(float _screenWidth, float _screenH
 	
 	// Move the apex of the frustum to the origin.
 	result = FTranslationMatrix(-eyePosition) * result;
-	GEngine->AddOnScreenDebugMessage(41, 2, FColor::Red, FString::Printf(TEXT("FrustumMatrix_MOV: %s"), *result.ToString()));
+	//GEngine->AddOnScreenDebugMessage(41, 2, FColor::Red, FString::Printf(TEXT("FrustumMatrix_MOV: %s"), *result.ToString()));
 
 	//scales matrix for UE4 and RHI
 	result *= 1.0f / result.M[0][0]; 
-	GEngine->AddOnScreenDebugMessage(42, 2, FColor::Red, FString::Printf(TEXT("FrustumMatrix_DIV: %s"), *result.ToString()));
+	//GEngine->AddOnScreenDebugMessage(42, 2, FColor::Red, FString::Printf(TEXT("FrustumMatrix_DIV: %s"), *result.ToString()));
 
 	result.M[2][2] = 0.f; //?
 	result.M[3][2] = n; //?
 
-	GEngine->AddOnScreenDebugMessage(49, 2, FColor::Red, FString::Printf(TEXT("FrustumMatrix_MOD : %s"), *result.ToString()));
+	//GEngine->AddOnScreenDebugMessage(49, 2, FColor::Red, FString::Printf(TEXT("FrustumMatrix_MOD : %s"), *result.ToString()));
 
 	return result;
 }
@@ -550,15 +550,13 @@ void UOffAxisGameViewportClient::Draw(FViewport* InViewport, FCanvas* SceneCanva
 				/************************************************************************/
 				/* OFF-AXIS-MAGIC                                                       */
 				/************************************************************************/
-				//if (mOffAxisMatrixSetted)
-				//	UpdateProjectionMatrix(View, mOffAxisMatrix, PassType);
+				SetOffAxisMatrix(GenerateOffAxisMatrix(s_Width, s_Height, s_EyePosition, PassType));
+				UpdateProjectionMatrix(View, mOffAxisMatrix, PassType);
 				/************************************************************************/
 				/* OFF-AXIS-MAGIC                                                       */
 				/************************************************************************/
 
-				SetOffAxisMatrix(GenerateOffAxisMatrix(s_Width, s_Height, s_EyePosition, PassType));
-				UpdateProjectionMatrix(View, mOffAxisMatrix, PassType);
-
+				
 				if (View)
 				{
 					if (View->Family->EngineShowFlags.Wireframe)
