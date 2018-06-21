@@ -67,7 +67,7 @@ static float s_ProjectionPlaneOffset = 0.f;
 static FVector s_EyePosition;
 static float s_Width = 0.f;
 static float s_Height = 0.f;
-
+static float s_ShowDebugMessages = false;
 
 static FVector s_tmp = FVector(0.f, 0.f, 0.f);
 /**
@@ -208,11 +208,6 @@ static FMatrix GenerateOffAxisMatrix_Internal(float _screenWidth, float _screenH
 		const FVector pc(-width / 2.0f, height / 2.0f, n);
 		const FVector pe(eyePosition.X, eyePosition.Y, eyePosition.Z);
 
-		GEngine->AddOnScreenDebugMessage(11, 2, FColor::Red, FString::Printf(TEXT("pa: %s"), *pa.ToString()));
-		GEngine->AddOnScreenDebugMessage(12, 2, FColor::Red, FString::Printf(TEXT("pb: %s"), *pb.ToString()));
-		GEngine->AddOnScreenDebugMessage(13, 2, FColor::Red, FString::Printf(TEXT("pc: %s"), *pc.ToString()));
-		GEngine->AddOnScreenDebugMessage(14, 2, FColor::Red, FString::Printf(TEXT("pe: %s"), *pe.ToString()));
-
 		// Compute the screen corner vectors.
 		FVector va, vb, vc; 
 		va = pa - pe;
@@ -230,10 +225,8 @@ static FMatrix GenerateOffAxisMatrix_Internal(float _screenWidth, float _screenH
 		
 		// Find the distance from the eye to screen plane.
 		float d = -FVector::DotProduct(va, vn);
-		GEngine->AddOnScreenDebugMessage(10, 2, FColor::Red, FString::Printf(TEXT("Eye-Screen-Distance: %f"), d));
 
 		nd = n / d;
-		GEngine->AddOnScreenDebugMessage(20, 4, FColor::Red, FString::Printf(TEXT("nd: %f"), nd));
 		
 		// Find the extent of the perpendicular projection.
 		l = FVector::DotProduct(vr, va) * nd;
@@ -241,7 +234,6 @@ static FMatrix GenerateOffAxisMatrix_Internal(float _screenWidth, float _screenH
 		b = FVector::DotProduct(vu, va) * nd;
 		t = FVector::DotProduct(vu, vc) * nd;
 
-		GEngine->AddOnScreenDebugMessage(30, 4, FColor::Red, FString::Printf(TEXT("Frustum: %f \t %f \t %f \t %f \t %f \t %f \t "), l,r,b,t,n,f));
 
 
 		// Load the perpendicular projection.
@@ -259,6 +251,22 @@ static FMatrix GenerateOffAxisMatrix_Internal(float _screenWidth, float _screenH
 		M.M[2][0] = vn.X; M.M[2][1] = vn.Y; M.M[2][2] = vn.Z;
 		M.M[3][3] = 1.0f;
 		result = result * M;
+
+		if (s_ShowDebugMessages)
+		{
+			GEngine->AddOnScreenDebugMessage(10, 2, FColor::Red, FString::Printf(TEXT("pa: %s"), *pa.ToString()));
+			GEngine->AddOnScreenDebugMessage(20, 2, FColor::Red, FString::Printf(TEXT("pb: %s"), *pb.ToString()));
+			GEngine->AddOnScreenDebugMessage(30, 2, FColor::Red, FString::Printf(TEXT("pc: %s"), *pc.ToString()));
+			GEngine->AddOnScreenDebugMessage(40, 2, FColor::Red, FString::Printf(TEXT("pe: %s"), *pe.ToString()));
+			GEngine->AddOnScreenDebugMessage(50, 2, FColor::Red, FString::Printf(TEXT("vr: %s"), *vu.ToString()));
+			GEngine->AddOnScreenDebugMessage(60, 2, FColor::Red, FString::Printf(TEXT("vu: %s"), *vr.ToString()));
+			GEngine->AddOnScreenDebugMessage(70, 2, FColor::Red, FString::Printf(TEXT("vn: %s"), *vn.ToString()));
+			GEngine->AddOnScreenDebugMessage(80, 4, FColor::Red, FString::Printf(TEXT("Frustum: %f \t %f \t %f \t %f \t %f \t %f \t "), l, r, b, t, n, f));
+			GEngine->AddOnScreenDebugMessage(90, 2, FColor::Red, FString::Printf(TEXT("Eye-Screen-Distance: %f"), d));
+			GEngine->AddOnScreenDebugMessage(100, 4, FColor::Red, FString::Printf(TEXT("nd: %f"), nd));
+		}
+
+
 	}	
 	
 	// Move the apex of the frustum to the origin.
@@ -376,6 +384,11 @@ void UOffAxisGameViewportClient::ResetEyeOffsetForStereo(float _newVal)
 void UOffAxisGameViewportClient::UpdateTmpVector(FVector _newVal)
 {
 	s_tmp = _newVal;
+}
+
+void UOffAxisGameViewportClient::UpdateShowDebugMessages(bool _newVal)
+{
+	s_ShowDebugMessages = _newVal;
 }
 
 static FMatrix _AdjustProjectionMatrixForRHI(const FMatrix& InProjectionMatrix)

@@ -53,6 +53,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "OffAxis")
 		static void UpdateTmpVector(FVector _newVal);
 
+	UFUNCTION(BlueprintCallable, Category = "OffAxis")
+		static void UpdateShowDebugMessages(bool _newVal);
 
 
 	virtual void Draw(FViewport* Viewport, FCanvas* SceneCanvas) override;
