@@ -67,6 +67,9 @@ static float s_ProjectionPlaneOffset = 0.f;
 static FVector s_EyePosition;
 static float s_Width = 0.f;
 static float s_Height = 0.f;
+
+
+static FVector s_tmp = FVector(0.f, 0.f, 0.f);
 /**
 * UI Stats
 */
@@ -368,6 +371,11 @@ void UOffAxisGameViewportClient::ResetProjectionPlaneOffsetForStereo(float _newV
 void UOffAxisGameViewportClient::ResetEyeOffsetForStereo(float _newVal)
 {
 	s_EyeOffsetVal = _newVal;
+}
+
+void UOffAxisGameViewportClient::UpdateTmpVector(FVector _newVal)
+{
+	s_tmp = _newVal;
 }
 
 static FMatrix _AdjustProjectionMatrixForRHI(const FMatrix& InProjectionMatrix)
