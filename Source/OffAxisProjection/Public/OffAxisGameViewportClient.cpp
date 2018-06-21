@@ -222,10 +222,10 @@ static FMatrix GenerateOffAxisMatrix_Internal(float _screenWidth, float _screenH
 		vu /= vu.Normalize();
 		vn = FVector::CrossProduct(vr, vu); 
 		vn /= vn.Normalize();
-		
+	
 		// Find the distance from the eye to screen plane.
 		float d = -FVector::DotProduct(va, vn);
-
+	
 		nd = n / d;
 		
 		// Find the extent of the perpendicular projection.
@@ -234,7 +234,7 @@ static FMatrix GenerateOffAxisMatrix_Internal(float _screenWidth, float _screenH
 		b = FVector::DotProduct(vu, va) * nd;
 		t = FVector::DotProduct(vu, vc) * nd;
 
-
+		
 
 		// Load the perpendicular projection.
 		result = FrustumMatrix(l, r, b, t, n, f);
@@ -420,8 +420,14 @@ static void UpdateProjectionMatrix(FSceneView* View, FMatrix OffAxisMatrix, ESte
 	default:
 		break;
 	}
+
+	FRotator myrotator = FRotator(s_tmp.X, s_tmp.Y, s_tmp.Z);
+	FRotationMatrix f = FRotationMatrix(myrotator);
 	
-	FMatrix axisChanger; //rotates everything.
+	stereoProjectionMatrix = f * stereoProjectionMatrix;
+
+
+	FMatrix axisChanger; //rotates everything to UE4 coordinate system.
 
 	axisChanger.SetIdentity();
 	axisChanger.M[0][0] = 0.0f;
