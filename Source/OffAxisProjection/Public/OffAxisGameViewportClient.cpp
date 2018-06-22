@@ -424,7 +424,7 @@ static void UpdateProjectionMatrix(FSceneView* View, FMatrix OffAxisMatrix, ESte
 	FRotator myrotator = FRotator(s_tmp.X, s_tmp.Y, s_tmp.Z);
 	FRotationMatrix f = FRotationMatrix(myrotator);
 	
-	stereoProjectionMatrix = f * stereoProjectionMatrix;
+	//stereoProjectionMatrix = f * stereoProjectionMatrix;
 
 
 	FMatrix axisChanger; //rotates everything to UE4 coordinate system.
