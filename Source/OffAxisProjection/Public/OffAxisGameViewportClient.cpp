@@ -51,7 +51,7 @@
 #define LOCTEXT_NAMESPACE "GameViewport"
 
 /** This variable allows forcing full screen of the first player controller viewport, even if there are multiple controllers plugged in and no cinematic playing. */
-bool GForceFullscreen = false;
+//bool GForceFullscreen = false;
 
 /** Whether to visualize the lightmap selected by the Debug Camera. */
 extern ENGINE_API bool GShowDebugSelectedLightmap;
@@ -68,6 +68,7 @@ static FVector s_EyePosition;
 static float s_Width = 0.f;
 static float s_Height = 0.f;
 static float s_ShowDebugMessages = false;
+static bool s_bUseoffAxis = true;
 
 static FVector s_tmp = FVector(0.f, 0.f, 0.f);
 /**
@@ -391,6 +392,11 @@ void UOffAxisGameViewportClient::UpdateShowDebugMessages(bool _newVal)
 	s_ShowDebugMessages = _newVal;
 }
 
+void UOffAxisGameViewportClient::UseOffAxis(bool _newVal)
+{
+	s_bUseoffAxis = _newVal;
+}
+
 static FMatrix _AdjustProjectionMatrixForRHI(const FMatrix& InProjectionMatrix)
 {
 	const float GMinClipZ = GNearClippingPlane;
@@ -441,24 +447,25 @@ static void UpdateProjectionMatrix(FSceneView* View, FMatrix OffAxisMatrix, ESte
 	View->ProjectionMatrixUnadjustedForRHI = View->ViewMatrices.GetViewMatrix().Inverse() * axisChanger * stereoProjectionMatrix;
 
 	//////////////////////////////////////////////////////////////////////////
-	FMatrix* pInvViewMatrix = (FMatrix*)(&View->ViewMatrices.GetInvViewMatrix());	*pInvViewMatrix = View->ViewMatrices.GetViewMatrix().Inverse();	//////////////////////////////////////////////////////////////////////////
+	FMatrix* pInvViewMatrix = (FMatrix*)(&View->ViewMatrices.GetInvViewMatrix());
+	*pInvViewMatrix = View->ViewMatrices.GetViewMatrix().Inverse();
+	FMatrix TranslatedViewMatrix = FTranslationMatrix(-View->ViewMatrices.GetPreViewTranslation()) * View->ViewMatrices.GetViewMatrix();
+	FVector* pPreViewTranslation = (FVector*)(&View->ViewMatrices.GetPreViewTranslation());
+	//////////////////////////////////////////////////////////////////////////
 
 	FMatrix* pProjectionMatrix = (FMatrix*)(&View->ViewMatrices.GetProjectionMatrix());
 	*pProjectionMatrix = _AdjustProjectionMatrixForRHI(View->ProjectionMatrixUnadjustedForRHI);
 
 	//////////////////////////////////////////////////////////////////////////
-	FMatrix TranslatedViewMatrix = FTranslationMatrix(-View->ViewMatrices.GetPreViewTranslation()) * View->ViewMatrices.GetViewMatrix();	FVector* pPreViewTranslation = (FVector*)(&View->ViewMatrices.GetPreViewTranslation());	*pPreViewTranslation = -View->ViewMatrices.GetViewOrigin();
-	FMatrix* pTranslatedViewMatrix = (FMatrix*)(&View->ViewMatrices.GetTranslatedViewMatrix());
-	FMatrix* pTranslatedViewProjectionMatrix = (FMatrix*)(&View->ViewMatrices.GetTranslatedViewProjectionMatrix());
-	*pTranslatedViewProjectionMatrix = TranslatedViewMatrix * View->ViewMatrices.GetProjectionMatrix();
-
-	FMatrix* pInvTranslatedViewProjectionMatrixx = (FMatrix*)(&View->ViewMatrices.GetInvTranslatedViewProjectionMatrix());
-	*pInvTranslatedViewProjectionMatrixx = View->ViewMatrices.GetTranslatedViewProjectionMatrix().Inverse();
-
-
-	View->ShadowViewMatrices = View->ViewMatrices;
-
-	GetViewFrustumBounds(View->ViewFrustum, View->ViewMatrices.GetViewProjectionMatrix(), false);
+	*pPreViewTranslation = -View->ViewMatrices.GetViewOrigin();
+	FMatrix* pTranslatedViewMatrix = (FMatrix*)(&View->ViewMatrices.GetTranslatedViewMatrix());
+	FMatrix* pTranslatedViewProjectionMatrix = (FMatrix*)(&View->ViewMatrices.GetTranslatedViewProjectionMatrix());
+	*pTranslatedViewProjectionMatrix = TranslatedViewMatrix * View->ViewMatrices.GetProjectionMatrix();
+	FMatrix* pInvTranslatedViewProjectionMatrixx = (FMatrix*)(&View->ViewMatrices.GetInvTranslatedViewProjectionMatrix());
+	*pInvTranslatedViewProjectionMatrixx = View->ViewMatrices.GetTranslatedViewProjectionMatrix().Inverse();
+	View->ShadowViewMatrices = View->ViewMatrices;
+	GetViewFrustumBounds(View->ViewFrustum, View->ViewMatrices.GetViewProjectionMatrix(), false);
+	//////////////////////////////////////////////////////////////////////////
 
 
 }
@@ -588,8 +595,12 @@ void UOffAxisGameViewportClient::Draw(FViewport* InViewport, FCanvas* SceneCanva
 				/************************************************************************/
 				/* OFF-AXIS-MAGIC                                                       */
 				/************************************************************************/
-				SetOffAxisMatrix(GenerateOffAxisMatrix(s_Width, s_Height, s_EyePosition, PassType));
-				UpdateProjectionMatrix(View, mOffAxisMatrix, PassType);
+				if (s_bUseoffAxis)
+				{
+					SetOffAxisMatrix(GenerateOffAxisMatrix(s_Width, s_Height, s_EyePosition, PassType));
+					UpdateProjectionMatrix(View, mOffAxisMatrix, PassType);
+				}
+					
 				/************************************************************************/
 				/* OFF-AXIS-MAGIC                                                       */
 				/************************************************************************/
