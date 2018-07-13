@@ -363,13 +363,15 @@ void UOffAxisGameViewportClient::UpdateEyeOffsetForStereo(float _newVal)
 {
 	s_EyeOffsetVal += _newVal;
 
-	GEngine->AddOnScreenDebugMessage(40, 2, FColor::Cyan, FString::Printf(TEXT("EyeDistance: %f"), 2 * s_EyeOffsetVal));
+	if (s_ShowDebugMessages)
+		GEngine->AddOnScreenDebugMessage(40, 2, FColor::Cyan, FString::Printf(TEXT("EyeDistance: %f"), 2 * s_EyeOffsetVal));
 }
 
 void UOffAxisGameViewportClient::UpdateProjectionPlaneOffsetForStereo(float _newVal)
 {
 	s_ProjectionPlaneOffset += _newVal;
-	GEngine->AddOnScreenDebugMessage(50, 2, FColor::Cyan, FString::Printf(TEXT("ProjectionPlaneOffset: %f"), s_ProjectionPlaneOffset));
+	if (s_ShowDebugMessages)
+		GEngine->AddOnScreenDebugMessage(50, 2, FColor::Cyan, FString::Printf(TEXT("ProjectionPlaneOffset: %f"), s_ProjectionPlaneOffset));
 }
 
 void UOffAxisGameViewportClient::ResetProjectionPlaneOffsetForStereo(float _newVal /*= 0.f*/)
@@ -466,7 +468,7 @@ static void UpdateProjectionMatrix(FSceneView* View, FMatrix OffAxisMatrix, ESte
 	*pInvTranslatedViewProjectionMatrixx = View->ViewMatrices.GetTranslatedViewProjectionMatrix().Inverse();
 
 	View->ShadowViewMatrices = View->ViewMatrices;
-	View->ViewMatrices
+	
 	GetViewFrustumBounds(View->ViewFrustum, View->ViewMatrices.GetViewProjectionMatrix(), false);
 
 
