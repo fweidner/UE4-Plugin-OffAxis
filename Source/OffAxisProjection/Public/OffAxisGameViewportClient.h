@@ -15,11 +15,22 @@ class UOffAxisGameViewportClient : public UGameViewportClient
 
 public:
 
-	UFUNCTION(BlueprintCallable, Category = "OffAxis")
-		static FMatrix GenerateOffAxisMatrix(float _screenWidth, float _screenHeight,  FVector _eyeRelativePositon, FVector _tmp);
+	FMatrix GenerateOffAxisMatrix(float _screenWidth, float _screenHeight, FVector _eyeRelativePositon, EStereoscopicPass _PassType);
 
 	UFUNCTION(BlueprintCallable, Category = "OffAxis")
-		static void SetOffAxisMatrix(FMatrix OffAxisMatrix);
+		static FMatrix GenerateOffAxisMatrix(float _screenWidth, float _screenHeight,  FVector _eyeRelativePositon);
+
+	UFUNCTION(BlueprintCallable, Category = "OffAxis")
+	static void SetOffAxisMatrix(FMatrix OffAxisMatrix);
+
+	UFUNCTION(BlueprintCallable, Category = "OffAxis")
+		static void UpdateEyeRelativePosition(FVector _eyeRelativePosition);
+
+	UFUNCTION(BlueprintCallable, Category = "OffAxis")
+		static void SetWidth(float _width);
+
+	UFUNCTION(BlueprintCallable, Category = "OffAxis")
+		static void SetHeight(float _height);
 
 	UFUNCTION(BlueprintCallable, Category = "OffAxis")
 		static void ToggleOffAxisMethod();
@@ -31,7 +42,13 @@ public:
 		static void UpdateEyeOffsetForStereo(float _newVal);
 
 	UFUNCTION(BlueprintCallable, Category = "OffAxis")
-		static void ResetEyeOffsetForStereo(float _newVal = 3.2f);
+		static void UpdateProjectionPlaneOffsetForStereo(float _newVal);
+
+	UFUNCTION(BlueprintCallable, Category = "OffAxis")
+		static void ResetProjectionPlaneOffsetForStereo(float _newVal = 0.f);
+
+	UFUNCTION(BlueprintCallable, Category = "OffAxis")
+		static void ResetEyeOffsetForStereo(float _newVal = 3.2000005f);
 
 
 	virtual void Draw(FViewport* Viewport, FCanvas* SceneCanvas) override;
