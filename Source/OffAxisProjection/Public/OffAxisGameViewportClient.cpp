@@ -65,9 +65,12 @@ extern ENGINE_API UPrimitiveComponent* GDebugSelectedComponent;
 extern ENGINE_API class FLightMap2D* GDebugSelectedLightmap;
 
 
-static int OffAxisVersion = 1; //0 = optimized; 1 = default;
-static float EyeOffsetVal = 3.2f;
-
+static int s_OffAxisVersion = 1; //0 = optimized; 1 = default;
+static float s_EyeOffsetVal = 3.2000005f;
+static float s_ProjectionPlaneOffset = 0.f;
+static FVector s_EyePosition;
+static float s_Width = 0.f;
+static float s_Height = 0.f;
 /**
 * UI Stats
 */
@@ -160,13 +163,14 @@ static FMatrix FrustumMatrix(float left, float right, float bottom, float top, f
 	return Result;
 }
 
-static FMatrix GenerateOffAxisMatrix_Internal(float _screenWidth, float _screenHeight,  FVector _eyeRelativePositon, FVector _tmp)
+static FMatrix GenerateOffAxisMatrix_Internal(float _screenWidth, float _screenHeight,  FVector _eyeRelativePositon)
 {
 
 	FMatrix result;
 
 	float width = _screenWidth;
 	float height = _screenHeight;
+	FVector eyePosition = _eyeRelativePositon;
 
 	float l, r, b, t, n, f, nd;
 
@@ -176,9 +180,10 @@ static FMatrix GenerateOffAxisMatrix_Internal(float _screenWidth, float _screenH
 	FMatrix matFlipZ;
 	matFlipZ.SetIdentity();
 
+
 	//FMatrix OffAxisProjectionMatrix;
 
-	if (OffAxisVersion == 0)
+	if (s_OffAxisVersion == 0)
 	{
 		FVector topLeftCorner(-width / 2.f, -height / 2.f, n);
 		FVector bottomRightCorner(width / 2.f, height / 2.f, n);
@@ -209,7 +214,7 @@ static FMatrix GenerateOffAxisMatrix_Internal(float _screenWidth, float _screenH
 		const FVector pa(-width / 2.0f, -height / 2.0f, n);
 		const FVector pb(width / 2.0f, -height / 2.0f, n);
 		const FVector pc(-width / 2.0f, height / 2.0f, n);
-		const FVector pe(_eyeRelativePositon.X, _eyeRelativePositon.Y, _eyeRelativePositon.Z);
+		const FVector pe(eyePosition.X, eyePosition.Y, eyePosition.Z);
 
 // 		//GEngine->AddOnScreenDebugMessage(11, 2, FColor::Red, FString::Printf(TEXT("pa: %s"), *pa.ToString()));
 // 		//GEngine->AddOnScreenDebugMessage(12, 2, FColor::Red, FString::Printf(TEXT("pb: %s"), *pb.ToString()));
@@ -262,9 +267,6 @@ static FMatrix GenerateOffAxisMatrix_Internal(float _screenWidth, float _screenH
 		M.M[2][0] = vn.X; M.M[2][1] = vn.Y; M.M[2][2] = vn.Z;
 		M.M[3][3] = 1.0f;
 		result = result * M;
-
-
-
 	}	
 	
 	// Move the apex of the frustum to the origin.
@@ -280,14 +282,35 @@ static FMatrix GenerateOffAxisMatrix_Internal(float _screenWidth, float _screenH
 
 	//GEngine->AddOnScreenDebugMessage(49, 2, FColor::Red, FString::Printf(TEXT("FrustumMatrix_MOD : %s"), *result.ToString()));
 
-	//result.M[2][3] /= 2;
-
 	return result;
 }
 
-FMatrix UOffAxisGameViewportClient::GenerateOffAxisMatrix(float _screenWidth, float _screenHeight, FVector _eyeRelativePositon, FVector _tmp)
+FMatrix UOffAxisGameViewportClient::GenerateOffAxisMatrix(float _screenWidth, float _screenHeight, FVector _eyeRelativePositon)
 {
-	return GenerateOffAxisMatrix_Internal(_screenWidth, _screenHeight, _eyeRelativePositon, _tmp);
+	return GenerateOffAxisMatrix_Internal(_screenWidth, _screenHeight, _eyeRelativePositon);
+}
+
+FMatrix UOffAxisGameViewportClient::GenerateOffAxisMatrix(float _screenWidth, float _screenHeight, FVector _eyeRelativePositon, EStereoscopicPass _PassType)
+{
+	FVector tmpeye = _eyeRelativePositon;
+	switch (_PassType)
+	{
+	case eSSP_FULL:
+		break;
+	case eSSP_LEFT_EYE:
+		tmpeye += FVector(s_EyeOffsetVal, 0.f, 0.f);
+		break;
+	case eSSP_RIGHT_EYE:
+		tmpeye -= FVector(s_EyeOffsetVal, 0.f, 0.f);
+		break;
+	case eSSP_MONOSCOPIC_EYE:
+		break;
+	default:
+		break;
+	}
+
+
+	return GenerateOffAxisMatrix(_screenWidth, _screenHeight, tmpeye);
 }
 
 void UOffAxisGameViewportClient::SetOffAxisMatrix(FMatrix OffAxisMatrix)
@@ -301,35 +324,61 @@ void UOffAxisGameViewportClient::SetOffAxisMatrix(FMatrix OffAxisMatrix)
 	}
 }
 
+void UOffAxisGameViewportClient::UpdateEyeRelativePosition(FVector _eyeRelativePosition)
+{
+	s_EyePosition = _eyeRelativePosition;
+}
+
+void UOffAxisGameViewportClient::SetWidth(float _width)
+{
+	s_Width = _width; 
+}
+
+void UOffAxisGameViewportClient::SetHeight(float _height)
+{
+	s_Height = _height;
+}
+
 void UOffAxisGameViewportClient::ToggleOffAxisMethod()
 {
-	if (OffAxisVersion == 0)
+	if (s_OffAxisVersion == 0)
 	{
-		OffAxisVersion = 1;
+		s_OffAxisVersion = 1;
 	}
 	else
 	{
-		OffAxisVersion = 0;
+		s_OffAxisVersion = 0;
 	}
 	PrintCurrentOffAxisVersioN();
 }
 
 void UOffAxisGameViewportClient::PrintCurrentOffAxisVersioN()
 {
-	UE_LOG(LogConsoleResponse, Warning, TEXT("OffAxisVersion: %s"), (OffAxisVersion ? TEXT("Basic") : TEXT("Optimized"))); //if true (==1) -> basic, else opitmized
-	//GEngine->AddOnScreenDebugMessage(30, 4, FColor::Cyan, FString::Printf(TEXT("OffAxisVersion: %s"), (OffAxisVersion ? TEXT("Basic") : TEXT("Optimized"))));
+	UE_LOG(LogConsoleResponse, Warning, TEXT("OffAxisVersion: %s"), (s_OffAxisVersion ? TEXT("Basic") : TEXT("Optimized"))); //if true (==1) -> basic, else opitmized
+	GEngine->AddOnScreenDebugMessage(30, 4, FColor::Cyan, FString::Printf(TEXT("OffAxisVersion: %s"), (s_OffAxisVersion ? TEXT("Basic") : TEXT("Optimized"))));
 }
 
 void UOffAxisGameViewportClient::UpdateEyeOffsetForStereo(float _newVal)
 {
-	EyeOffsetVal += _newVal;
+	s_EyeOffsetVal += _newVal;
 
-	//GEngine->AddOnScreenDebugMessage(0, 2, FColor::Cyan, FString::Printf(TEXT("EyeDistance: %f"), 2 * EyeOffsetVal));
+	GEngine->AddOnScreenDebugMessage(40, 2, FColor::Cyan, FString::Printf(TEXT("EyeDistance: %f"), 2 * s_EyeOffsetVal));
+}
+
+void UOffAxisGameViewportClient::UpdateProjectionPlaneOffsetForStereo(float _newVal)
+{
+	s_ProjectionPlaneOffset += _newVal;
+	GEngine->AddOnScreenDebugMessage(50, 2, FColor::Cyan, FString::Printf(TEXT("ProjectionPlaneOffset: %f"), s_ProjectionPlaneOffset));
+}
+
+void UOffAxisGameViewportClient::ResetProjectionPlaneOffsetForStereo(float _newVal /*= 0.f*/)
+{
+	s_ProjectionPlaneOffset = _newVal;
 }
 
 void UOffAxisGameViewportClient::ResetEyeOffsetForStereo(float _newVal)
 {
-	EyeOffsetVal = _newVal;
+	s_EyeOffsetVal = _newVal;
 }
 
 static FMatrix _AdjustProjectionMatrixForRHI(const FMatrix& InProjectionMatrix)
@@ -351,10 +400,10 @@ static void UpdateProjectionMatrix(FSceneView* View, FMatrix OffAxisMatrix, ESte
 	case eSSP_FULL:
 		break;
 	case eSSP_LEFT_EYE:
-		stereoProjectionMatrix = FTranslationMatrix(FVector(EyeOffsetVal, 0.f, 0.f)) * OffAxisMatrix;
+		stereoProjectionMatrix = FTranslationMatrix(FVector(s_ProjectionPlaneOffset, 0.f, 0.f)) * OffAxisMatrix;
 		break;
 	case eSSP_RIGHT_EYE:
-		stereoProjectionMatrix = FTranslationMatrix(FVector(-EyeOffsetVal, 0.f, 0.f)) * OffAxisMatrix;
+		stereoProjectionMatrix = FTranslationMatrix(FVector(-s_ProjectionPlaneOffset, 0.f, 0.f)) * OffAxisMatrix;
 		break;
 	case eSSP_MONOSCOPIC_EYE:
 		break;
@@ -517,11 +566,14 @@ void UOffAxisGameViewportClient::Draw(FViewport* InViewport, FCanvas* SceneCanva
 				/************************************************************************/
 				/* OFF-AXIS-MAGIC                                                       */
 				/************************************************************************/
-				if (mOffAxisMatrixSetted)
-					UpdateProjectionMatrix(View, mOffAxisMatrix, PassType);
+				//if (mOffAxisMatrixSetted)
+				//	UpdateProjectionMatrix(View, mOffAxisMatrix, PassType);
 				/************************************************************************/
 				/* OFF-AXIS-MAGIC                                                       */
 				/************************************************************************/
+
+				SetOffAxisMatrix(GenerateOffAxisMatrix(s_Width, s_Height, s_EyePosition, PassType));
+				UpdateProjectionMatrix(View, mOffAxisMatrix, PassType);
 
 				if (View)
 				{

@@ -34,6 +34,7 @@ Assuming you start with a Basic Code C++ project:
 - Adjust Input mappings in Config/DefaultInput.ini
 - Drag the OffAxisActor in your scene
 - Set position of OffAxisActor to 0,0,0: This is what you see.
+- Change your NearClippingPlane .1f 
 
 Ok, here's the catch. The cube of the OffAxisActor do not specifiy the extents of the position of your FishTank Virtual Reality. They specifiy just the height and width. Currently, the origin of the FishTankVR/OffAxisProjection is always at (0,0,0) with the size of width/height specified by the cube ExtentPoint.
 
