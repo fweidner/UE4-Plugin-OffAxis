@@ -62,7 +62,9 @@ public:
 
 	virtual void Draw(FViewport* Viewport, FCanvas* SceneCanvas) override;
 
-	
+	UFUNCTION(BlueprintCallable, Category = "OffAxis")
+		static void Init();
+
 
 private:
 	FName CurrentBufferVisualizationMode;

@@ -158,6 +158,7 @@ static FMatrix FrustumMatrix(float left, float right, float bottom, float top, f
 
 static FMatrix GenerateOffAxisMatrix_Internal(float _screenWidth, float _screenHeight,  FVector _eyeRelativePositon)
 {
+	GEngine->AddOnScreenDebugMessage(100, 4, FColor::Red, FString::Printf(TEXT("sdfasdf")));
 
 	FMatrix result;
 
@@ -478,6 +479,16 @@ static void UpdateProjectionMatrix(FSceneView* View, FMatrix OffAxisMatrix, ESte
 
 }
 
+void UOffAxisGameViewportClient::Init()
+{
+	auto This = Cast<UOffAxisGameViewportClient>(GEngine->GameViewport);
+
+	if (This)
+	{
+		This->mOffAxisMatrixSetted = true;
+	}
+}
+
 void UOffAxisGameViewportClient::Draw(FViewport* InViewport, FCanvas* SceneCanvas)
 {
 	//Valid SceneCanvas is required.  Make this explicit.
@@ -603,7 +614,8 @@ void UOffAxisGameViewportClient::Draw(FViewport* InViewport, FCanvas* SceneCanva
 				/************************************************************************/
 				/* OFF-AXIS-MAGIC                                                       */
 				/************************************************************************/
-				if (s_bUseoffAxis)
+				
+				if (s_bUseoffAxis && mOffAxisMatrixSetted)
 				{
 					SetOffAxisMatrix(GenerateOffAxisMatrix(s_Width, s_Height, s_EyePosition, PassType));
 					UpdateProjectionMatrix(View, mOffAxisMatrix, PassType);
