@@ -158,8 +158,6 @@ static FMatrix FrustumMatrix(float left, float right, float bottom, float top, f
 
 static FMatrix GenerateOffAxisMatrix_Internal(float _screenWidth, float _screenHeight,  FVector _eyeRelativePositon)
 {
-	GEngine->AddOnScreenDebugMessage(100, 4, FColor::Red, FString::Printf(TEXT("sdfasdf")));
-
 	FMatrix result;
 
 	float width = _screenWidth;
