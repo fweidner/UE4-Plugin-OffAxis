@@ -63,7 +63,7 @@ public:
 	virtual void Draw(FViewport* Viewport, FCanvas* SceneCanvas) override;
 
 	UFUNCTION(BlueprintCallable, Category = "OffAxis")
-		static void Init();
+		static void InitOffAxisProjection();
 
 
 private:

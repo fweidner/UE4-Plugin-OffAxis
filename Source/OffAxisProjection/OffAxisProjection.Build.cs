@@ -25,10 +25,9 @@ public class OffAxisProjection : ModuleRules
 			new string[]
 			{
 				"Core",
-				
 				// ... add other public dependencies that you statically link with here ...
 			}
-			);
+            );
 			
 		
 		PrivateDependencyModuleNames.AddRange(
@@ -41,6 +40,8 @@ public class OffAxisProjection : ModuleRules
                 "ShaderCore",
                 "HeadMountedDisplay",
                  "InputCore",
+                 "RHI",
+                 "RenderCore",
 				// ... add private dependencies that you statically link with here ...	
 			}
             );
