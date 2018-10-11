@@ -1,20 +1,15 @@
 // Some copyright should be here...
 
 using UnrealBuildTool;
+using System.IO;
 
 public class OffAxisProjection : ModuleRules
 {
 	public OffAxisProjection(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
-		
-		PublicIncludePaths.AddRange(
-			new string[] {
-				"OffAxisProjection/Public"
-				
-				// ... add public include paths required here ...
-			}
-			);
+
+        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "Public"));
 				
 		
 		PrivateIncludePaths.AddRange(
