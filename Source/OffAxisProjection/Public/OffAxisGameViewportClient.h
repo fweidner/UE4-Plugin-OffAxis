@@ -71,6 +71,13 @@ private:
 	FMatrix		mOffAxisMatrix;
 	bool		mOffAxisMatrixSetted = false;
 	
+	/** Delegate called when the engine finishes drawing a game viewport */
+	FSimpleMulticastDelegate EndDrawDelegate;
 
+	/** Delegate called when the engine starts drawing a game viewport */
+	FSimpleMulticastDelegate BeginDrawDelegate;
+
+	/** Delegate called when the game viewport is drawn, before drawing the console */
+	FSimpleMulticastDelegate DrawnDelegate;
 };
 

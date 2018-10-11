@@ -530,7 +530,7 @@ void UOffAxisGameViewportClient::Draw(FViewport* InViewport, FCanvas* SceneCanva
 	//Valid SceneCanvas is required.  Make this explicit.
 	check(SceneCanvas);
 
-//	BeginDrawDelegate.Broadcast();
+	BeginDrawDelegate.Broadcast();
 
 	const bool bStereoRendering = GEngine->IsStereoscopic3D(InViewport);
 	FCanvas* DebugCanvas = InViewport->GetDebugCanvas();
@@ -1067,7 +1067,7 @@ void UOffAxisGameViewportClient::Draw(FViewport* InViewport, FCanvas* SceneCanva
 		//ensure canvas has been flushed before rendering UI
 		SceneCanvas->Flush_GameThread();
 
-		//DrawnDelegate.Broadcast();
+		DrawnDelegate.Broadcast();
 
 		// Allow the viewport to render additional stuff
 		PostRender(DebugCanvasObject);
@@ -1113,7 +1113,7 @@ void UOffAxisGameViewportClient::Draw(FViewport* InViewport, FCanvas* SceneCanva
 		}
 	}
 
-//	EndDrawDelegate.Broadcast();
+	EndDrawDelegate.Broadcast();
 }
 
 
