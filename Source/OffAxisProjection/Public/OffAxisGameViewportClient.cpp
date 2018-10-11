@@ -40,10 +40,6 @@
 //added during upgrade to 4.18
 #include "IXRTrackingSystem.h"
 
-//added during upgrade to 4.19
-#include "DynamicResolutionState.h"
-#include "LegacyScreenPercentageDriver.h"
-
 //added during plugin creation
 #include "Runtime/Engine/Classes//Engine//Canvas.h"
 #include "Runtime/Engine/Public/EngineUtils.h"
@@ -80,7 +76,6 @@ static FVector s_tmp = FVector(0.f, 0.f, 0.f);
 */
 //DECLARE_CYCLE_STAT(TEXT("UI Drawing Time"), STAT_UIDrawingTime, STATGROUP_UI);
 
-
 static TAutoConsoleVariable<int32> CVarSetBlackBordersEnabled(
 	TEXT("r.BlackBorders"),
 	0,
@@ -98,13 +93,7 @@ static TAutoConsoleVariable<int32> CVarScreenshotDelegate(
 	TEXT(" 1: delegates are on (default)"),
 	ECVF_Default);
 
-static TAutoConsoleVariable<float> CVarSecondaryScreenPercentage( // TODO: make it a user settings instead?
-	TEXT("r.SecondaryScreenPercentage.GameViewport"),
-	0,
-	TEXT("Override secondary screen percentage for game viewport.\n")
-	TEXT(" 0: Compute secondary screen percentage = 100 / DPIScalefactor automaticaly (default);\n")
-	TEXT(" 1: override secondary screen percentage."),
-	ECVF_Default);
+
 
 /**
 * Draw debug info on a game scene view.
@@ -542,15 +531,6 @@ void UOffAxisGameViewportClient::Draw(FViewport* InViewport, FCanvas* SceneCanva
 		EngineShowFlags)
 		.SetRealtimeUpdate(true));
 
-	//added in 4.19
-#if WITH_EDITOR
-	if (GIsEditor)
-	{
-		// Force enable view family show flag for HighDPI derived's screen percentage.
-		ViewFamily.EngineShowFlags.ScreenPercentage = true;
-	}
-#endif
-
 	//	GatherViewExtensions(InViewport, ViewFamily.ViewExtensions);
 	ViewFamily.ViewExtensions = GEngine->ViewExtensions->GatherActiveExtensions(InViewport);
 
@@ -567,7 +547,6 @@ void UOffAxisGameViewportClient::Draw(FViewport* InViewport, FCanvas* SceneCanva
 	}
 
 	ESplitScreenType::Type SplitScreenConfig = GetCurrentSplitscreenConfiguration();
-	ViewFamily.ViewMode = EViewModeIndex(ViewModeIndex);//added in 4.19
 	EngineShowFlagOverride(ESFIM_Game, (EViewModeIndex)ViewModeIndex, ViewFamily.EngineShowFlags, NAME_None, SplitScreenConfig != ESplitScreenType::None);
 
 	if (ViewFamily.EngineShowFlags.VisualizeBuffer && AllowDebugViewmodes())
@@ -610,7 +589,6 @@ void UOffAxisGameViewportClient::Draw(FViewport* InViewport, FCanvas* SceneCanva
 	TMap<ULocalPlayer*, FSceneView*> PlayerViewMap;
 
 	FAudioDevice* AudioDevice = MyWorld->GetAudioDevice();
-	TArray<FSceneView*> Views; //4.19
 
 	for (FLocalPlayerIterator Iterator(GEngine, MyWorld); Iterator; ++Iterator)
 	{
@@ -619,8 +597,7 @@ void UOffAxisGameViewportClient::Draw(FViewport* InViewport, FCanvas* SceneCanva
 		{
 			APlayerController* PlayerController = LocalPlayer->PlayerController;
 
-			//int32 NumViews = bStereoRendering ? 2 : 1;
-			const int32 NumViews = bStereoRendering ? ((ViewFamily.IsMonoscopicFarFieldEnabled()) ? 3 : GEngine->StereoRenderingDevice->GetDesiredNumberOfViews(bStereoRendering)) : 1; //4.19
+			int32 NumViews = bStereoRendering ? 2 : 1;
 
 			for (int32 i = 0; i < NumViews; ++i)
 			{
@@ -628,8 +605,7 @@ void UOffAxisGameViewportClient::Draw(FViewport* InViewport, FCanvas* SceneCanva
 				FVector		ViewLocation;
 				FRotator	ViewRotation;
 
-				//EStereoscopicPass PassType = !bStereoRendering ? eSSP_FULL : ((i == 0) ? eSSP_LEFT_EYE : eSSP_RIGHT_EYE);
-				EStereoscopicPass PassType = bStereoRendering ? GEngine->StereoRenderingDevice->GetViewPassForIndex(bStereoRendering, i) : eSSP_FULL; //4.19
+				EStereoscopicPass PassType = !bStereoRendering ? eSSP_FULL : ((i == 0) ? eSSP_LEFT_EYE : eSSP_RIGHT_EYE);
 
 				FSceneView* View = LocalPlayer->CalcSceneView(&ViewFamily, ViewLocation, ViewRotation, InViewport, &GameViewDrawer, PassType);
 
@@ -706,11 +682,6 @@ void UOffAxisGameViewportClient::Draw(FViewport* InViewport, FCanvas* SceneCanva
 								if (AudioDeviceManager->GetNumMainAudioDeviceWorlds() > 1)
 								{
 									uint32 MainAudioDeviceHandle = GEngine->GetAudioDeviceHandle();
-									//if (AudioDevice->DeviceHandle == MainAudioDeviceHandle && bHasAudioFocus)
-									if (AudioDevice->DeviceHandle == MainAudioDeviceHandle)
-									{
-										bUpdateListenerPosition = false;
-									}
 
 								}
 							}
@@ -747,10 +718,7 @@ void UOffAxisGameViewportClient::Draw(FViewport* InViewport, FCanvas* SceneCanva
 					}
 
 					// Add view information for resource streaming.
-					const float StreamingScale = 1.f / FMath::Clamp<float>(View->LODDistanceFactor, .2f, 1.f); //4.19
-					//IStreamingManager::Get().AddViewInformation(View->ViewMatrices.GetViewOrigin(), View->ViewRect.Width(), View->ViewRect.Width() * View->ViewMatrices.GetProjectionMatrix().M[0][0]);
-					IStreamingManager::Get().AddViewInformation(View->ViewMatrices.GetViewOrigin(), View->UnscaledViewRect.Width(), View->UnscaledViewRect.Width() * View->ViewMatrices.GetProjectionMatrix().M[0][0], StreamingScale);
-
+					IStreamingManager::Get().AddViewInformation(View->ViewMatrices.GetViewOrigin(), View->ViewRect.Width(), View->ViewRect.Width() * View->ViewMatrices.GetProjectionMatrix().M[0][0]);
 					MyWorld->ViewLocationsRenderedLastFrame.Add(View->ViewMatrices.GetViewOrigin());
 				}
 			}
@@ -798,115 +766,15 @@ void UOffAxisGameViewportClient::Draw(FViewport* InViewport, FCanvas* SceneCanva
 	bool bBufferCleared = false;
 	if (ViewFamily.Views.Num() == 0 || TotalArea != (MaxX - MinX)*(MaxY - MinY) || bDisableWorldRendering)
 	{
-		bool bStereoscopicPass = (ViewFamily.Views.Num() != 0 && ViewFamily.Views[0]->StereoPass != eSSP_FULL);
-		//SceneCanvas->DrawTile(0, 0, InViewport->GetSizeXY().X, InViewport->GetSizeXY().Y, 0.0f, 0.0f, 1.0f, 1.f, FLinearColor::Black, NULL, false);
-
-		if (bDisableWorldRendering || !bStereoscopicPass) // TotalArea computation does not work correctly for stereoscopic views //4.19
-		{
-			SceneCanvas->Clear(FLinearColor::Transparent);
-		}
+		SceneCanvas->DrawTile(0, 0, InViewport->GetSizeXY().X, InViewport->GetSizeXY().Y, 0.0f, 0.0f, 1.0f, 1.f, FLinearColor::Black, NULL, false);
 		bBufferCleared = true;
 	}
-
-	// Force screen percentage show flag to be turned off if not supported. //4.19
-	if (!ViewFamily.SupportsScreenPercentage())
-	{
-		ViewFamily.EngineShowFlags.ScreenPercentage = false;
-	}
-
-
-	/////////// 4.19
-
-
-	// Set up secondary resolution fraction for the view family.
-	if (!bStereoRendering && ViewFamily.SupportsScreenPercentage())
-	{
-		float CustomSecondaruScreenPercentage = CVarSecondaryScreenPercentage.GetValueOnGameThread();
-
-		if (CustomSecondaruScreenPercentage > 0.0)
-		{
-			// Override secondary resolution fraction with CVar.
-			ViewFamily.SecondaryViewFraction = FMath::Min(CustomSecondaruScreenPercentage / 100.0f, 1.0f);
-		}
-		else
-		{
-			// Automatically compute secondary resolution fraction from DPI.
-			ViewFamily.SecondaryViewFraction = GetDPIDerivedResolutionFraction();
-		}
-
-		check(ViewFamily.SecondaryViewFraction > 0.0f);
-	}
-
-	checkf(ViewFamily.GetScreenPercentageInterface() == nullptr,
-		TEXT("Some code has tried to set up an alien screen percentage driver, that could be wrong if not supported very well by the RHI."));
-
-	// Setup main view family with screen percentage interface by dynamic resolution if screen percentage is supported.
-	//
-	// Do not allow dynamic resolution to touch the view family if not supported to ensure there is no possibility to ruin
-	// game play experience on platforms that does not support it, but have it enabled by mistake.
-	if (ViewFamily.EngineShowFlags.ScreenPercentage && GEngine->GetDynamicResolutionState() && GEngine->GetDynamicResolutionState()->IsSupported())
-	{
-		GEngine->EmitDynamicResolutionEvent(EDynamicResolutionStateEvent::BeginDynamicResolutionRendering);
-		GEngine->GetDynamicResolutionState()->SetupMainViewFamily(ViewFamily);
-
-#if CSV_PROFILER
-		float ResolutionFraction = GEngine->GetDynamicResolutionState()->GetResolutionFractionApproximation();
-		if (ResolutionFraction >= 0.0f)
-		{
-			CSV_CUSTOM_STAT_GLOBAL(DynamicResolutionFraction, ResolutionFraction, ECsvCustomStatOp::Set);
-		}
-#endif
-	}
-
-	// If a screen percentage interface was not set by dynamic resolution, then create one matching legacy behavior.
-	if (ViewFamily.GetScreenPercentageInterface() == nullptr)
-	{
-		bool AllowPostProcessSettingsScreenPercentage = false;
-		float GlobalResolutionFraction = 1.0f;
-
-		if (ViewFamily.EngineShowFlags.ScreenPercentage)
-		{
-			// Allow FPostProcessSettings::ScreenPercentage.
-			AllowPostProcessSettingsScreenPercentage = true;
-
-			// Get global view fraction set by r.ScreenPercentage.
-			GlobalResolutionFraction = FLegacyScreenPercentageDriver::GetCVarResolutionFraction();
-		}
-
-		ViewFamily.SetScreenPercentageInterface(new FLegacyScreenPercentageDriver(
-			ViewFamily, GlobalResolutionFraction, AllowPostProcessSettingsScreenPercentage));
-	}
-	else if (bStereoRendering)
-	{
-		// Change screen percentage method to raw output when doing dynamic resolution with VR if not using TAA upsample.
-		for (FSceneView* View : Views)
-		{
-			if (View->PrimaryScreenPercentageMethod == EPrimaryScreenPercentageMethod::SpatialUpscale)
-			{
-				View->PrimaryScreenPercentageMethod = EPrimaryScreenPercentageMethod::RawOutput;
-			}
-		}
-	}
-
-	////////4.19
 
 	// Draw the player views.
 	if (!bDisableWorldRendering && !bUIDisableWorldRendering && PlayerViewMap.Num() > 0) //-V560
 	{
 		GetRendererModule().BeginRenderingViewFamily(SceneCanvas, &ViewFamily);
 	}
-	else //4.19
-	{
-		// Make sure RHI resources get flushed if we're not using a renderer
-		ENQUEUE_UNIQUE_RENDER_COMMAND(UGameViewportClient_FlushRHIResources,
-			{
-				FRHICommandListExecutor::GetImmediateCommandList().ImmediateFlush(EImmediateFlushType::FlushRHIThreadFlushResources);
-			});
-	}
-
-	// Beyond this point, only UI rendering independent from dynamc resolution.
-	GEngine->EmitDynamicResolutionEvent(EDynamicResolutionStateEvent::EndDynamicResolutionRendering); //4.19
-
 
 	// Clear areas of the rendertarget (backbuffer) that aren't drawn over by the views.
 	if (!bBufferCleared)
@@ -1029,14 +897,10 @@ void UOffAxisGameViewportClient::Draw(FViewport* InViewport, FCanvas* SceneCanva
 
 		//ensure canvas has been flushed before rendering UI
 		SceneCanvas->Flush_GameThread();
-	
-		//4.19
-		/*
 		if (DebugCanvas != NULL)
 		{
 			DebugCanvas->Flush_GameThread();
 		}
-		*/
 
 		//DrawnDelegate.Broadcast();
 
@@ -1061,34 +925,8 @@ void UOffAxisGameViewportClient::Draw(FViewport* InViewport, FCanvas* SceneCanva
 		}
 	}
 
-	//DrawStatsHUD(MyWorld, InViewport, DebugCanvas, DebugCanvasObject, DebugProperties, PlayerCameraLocation, PlayerCameraRotation);
+	DrawStatsHUD(MyWorld, InViewport, DebugCanvas, DebugCanvasObject, DebugProperties, PlayerCameraLocation, PlayerCameraRotation);
 
-
-	if (DebugCanvas)
-	{
-		// Reset the debug canvas to be full-screen before drawing the console
-		// (the debug draw service above has messed with the viewport size to fit it to a single player's subregion)
-		DebugCanvasObject->Init(DebugCanvasSize.X, DebugCanvasSize.Y, NULL, DebugCanvas);
-
-		DrawStatsHUD(MyWorld, InViewport, DebugCanvas, DebugCanvasObject, DebugProperties, PlayerCameraLocation, PlayerCameraRotation);
-
-		if (GEngine->IsStereoscopic3D(InViewport))
-		{
-#if 0 //!UE_BUILD_SHIPPING
-			// TODO: replace implementation in OculusHMD with a debug renderer
-			if (GEngine->XRSystem.IsValid())
-			{
-				GEngine->XRSystem->DrawDebug(DebugCanvasObject);
-			}
-#endif
-		}
-
-		// Render the console absolutely last because developer input is was matter the most.
-		if (ViewportConsole)
-		{
-			ViewportConsole->PostRender_Console(DebugCanvasObject);
-		}
-	}
 	//EndDrawDelegate.Broadcast();
 }
 
