@@ -201,7 +201,7 @@ static FMatrix GenerateOffAxisMatrix_Internal(float _screenWidth, float _screenH
 	float l, r, b, t, n, f, nd;
 
 	n = GNearClippingPlane;
-	f = 4000.f;
+	f = 10000.f;
 
 	FMatrix matFlipZ;
 	matFlipZ.SetIdentity();
@@ -446,6 +446,7 @@ static void UpdateProjectionMatrix(FSceneView* View, FMatrix OffAxisMatrix, ESte
 {
 	FMatrix stereoProjectionMatrix = OffAxisMatrix;
 
+	
 	switch (_Pass)
 	{
 	case eSSP_FULL:
@@ -481,29 +482,33 @@ static void UpdateProjectionMatrix(FSceneView* View, FMatrix OffAxisMatrix, ESte
 
 	View->ProjectionMatrixUnadjustedForRHI = View->ViewMatrices.GetViewMatrix().Inverse() * axisChanger * stereoProjectionMatrix;
 
-	//////////////////////////////////////////////////////////////////////////
-	FMatrix* pInvViewMatrix = (FMatrix*)(&View->ViewMatrices.GetInvViewMatrix());
-	*pInvViewMatrix = View->ViewMatrices.GetViewMatrix().Inverse();
-	FVector* pPreViewTranslation = (FVector*)(&View->ViewMatrices.GetPreViewTranslation());
-	*pPreViewTranslation = -View->ViewMatrices.GetViewOrigin();
-	//////////////////////////////////////////////////////////////////////////
+	View->UpdateProjectionMatrix( View->ViewMatrices.GetViewMatrix().Inverse() * axisChanger * stereoProjectionMatrix);
 
-	FMatrix* pProjectionMatrix = (FMatrix*)(&View->ViewMatrices.GetProjectionMatrix());
-	*pProjectionMatrix = _AdjustProjectionMatrixForRHI(View->ProjectionMatrixUnadjustedForRHI);
 
 	//////////////////////////////////////////////////////////////////////////
+	//FMatrix* pInvViewMatrix = (FMatrix*)(&View->ViewMatrices.GetInvViewMatrix());
+	//*pInvViewMatrix = View->ViewMatrices.GetViewMatrix().Inverse();
+	//FVector* pPreViewTranslation = (FVector*)(&View->ViewMatrices.GetPreViewTranslation());
+	//*pPreViewTranslation = -View->ViewMatrices.GetViewOrigin();
+	//////////////////////////////////////////////////////////////////////////
 
-	FMatrix TranslatedViewMatrix = FTranslationMatrix(-View->ViewMatrices.GetPreViewTranslation()) * View->ViewMatrices.GetViewMatrix();
-	FMatrix* pTranslatedViewProjectionMatrix = (FMatrix*)(&View->ViewMatrices.GetTranslatedViewProjectionMatrix());
-	*pTranslatedViewProjectionMatrix = TranslatedViewMatrix * View->ViewMatrices.GetProjectionMatrix();
+	//FMatrix* pProjectionMatrix = (FMatrix*)(&View->ViewMatrices.GetProjectionMatrix());
+	//*pProjectionMatrix = _AdjustProjectionMatrixForRHI(View->ProjectionMatrixUnadjustedForRHI);
 
-	FMatrix* pInvTranslatedViewProjectionMatrixx = (FMatrix*)(&View->ViewMatrices.GetInvTranslatedViewProjectionMatrix());
-	*pInvTranslatedViewProjectionMatrixx = View->ViewMatrices.GetTranslatedViewProjectionMatrix().Inverse();
+	//////////////////////////////////////////////////////////////////////////
 
-	View->ShadowViewMatrices = View->ViewMatrices;
+	//FMatrix TranslatedViewMatrix = FTranslationMatrix(-View->ViewMatrices.GetPreViewTranslation()) * View->ViewMatrices.GetViewMatrix();
+	//FMatrix* pTranslatedViewProjectionMatrix = (FMatrix*)(&View->ViewMatrices.GetTranslatedViewProjectionMatrix());
+	//*pTranslatedViewProjectionMatrix = TranslatedViewMatrix * View->ViewMatrices.GetProjectionMatrix();
 
-	GetViewFrustumBounds(View->ViewFrustum, View->ViewMatrices.GetViewProjectionMatrix(), false);
+	//FMatrix* pInvTranslatedViewProjectionMatrixx = (FMatrix*)(&View->ViewMatrices.GetInvTranslatedViewProjectionMatrix());
+	//*pInvTranslatedViewProjectionMatrixx = View->ViewMatrices.GetTranslatedViewProjectionMatrix().Inverse();
 
+	//View->ShadowViewMatrices = View->ViewMatrices;
+
+	//GetViewFrustumBounds(View->ViewFrustum, View->ViewMatrices.GetViewProjectionMatrix(), false);
+
+	
 
 
 	//////////////////////////////////////////////////////////////////////////
@@ -656,6 +661,7 @@ void UOffAxisGameViewportClient::Draw(FViewport* InViewport, FCanvas* SceneCanva
 
 				FSceneView* View = LocalPlayer->CalcSceneView(&ViewFamily, ViewLocation, ViewRotation, InViewport, &GameViewDrawer, PassType);
 
+
 				/************************************************************************/
 				/* OFF-AXIS-MAGIC                                                       */
 				/************************************************************************/
@@ -669,6 +675,7 @@ void UOffAxisGameViewportClient::Draw(FViewport* InViewport, FCanvas* SceneCanva
 				/************************************************************************/
 				/* OFF-AXIS-MAGIC                                                       */
 				/************************************************************************/
+
 
 				if (View)
 				{
