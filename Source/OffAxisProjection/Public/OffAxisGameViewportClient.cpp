@@ -718,8 +718,13 @@ void UOffAxisGameViewportClient::Draw(FViewport* InViewport, FCanvas* SceneCanva
 					}
 
 					// Add view information for resource streaming.
-					IStreamingManager::Get().AddViewInformation(View->ViewMatrices.GetViewOrigin(), View->ViewRect.Width(), View->ViewRect.Width() * View->ViewMatrices.GetProjectionMatrix().M[0][0]);
-					MyWorld->ViewLocationsRenderedLastFrame.Add(View->ViewMatrices.GetViewOrigin());
+					//IStreamingManager::Get().AddViewInformation(View->ViewMatrices.GetViewOrigin(), View->ViewRect.Width(), View->ViewRect.Width() * View->ViewMatrices.GetProjectionMatrix().M[0][0]);
+					//MyWorld->ViewLocationsRenderedLastFrame.Add(View->ViewMatrices.GetViewOrigin());
+
+					const float StreamingScale = 1.f / FMath::Clamp<float>(View->LODDistanceFactor, .2f, 1.f); //4.19 
+					//IStreamingManager::Get().AddViewInformation(View->ViewMatrices.GetViewOrigin(), View->ViewRect.Width(), View->ViewRect.Width() * View->ViewMatrices.GetProjectionMatrix().M[0][0]); 
+					IStreamingManager::Get().AddViewInformation(View->ViewMatrices.GetViewOrigin(), View->UnscaledViewRect.Width(), View->UnscaledViewRect.Width() * View->ViewMatrices.GetProjectionMatrix().M[0][0], StreamingScale);
+
 				}
 			}
 		}
