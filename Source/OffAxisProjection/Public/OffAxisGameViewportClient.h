@@ -50,15 +50,27 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "OffAxis")
 		static void ResetEyeOffsetForStereo(float _newVal = 3.2000005f);
 
+	UFUNCTION(BlueprintCallable, Category = "OffAxis")
+		static void UpdateTmpVector(FVector _newVal);
+
+	UFUNCTION(BlueprintCallable, Category = "OffAxis")
+		static void UpdateShowDebugMessages(bool _newVal);
+
+	UFUNCTION(BlueprintCallable, Category = "OffAxis")
+		static void UseOffAxis(bool _newVal);
+
 
 	virtual void Draw(FViewport* Viewport, FCanvas* SceneCanvas) override;
 
-	
+	UFUNCTION(BlueprintCallable, Category = "OffAxis")
+		static void Init();
+
 
 private:
 	FName CurrentBufferVisualizationMode;
 	FMatrix		mOffAxisMatrix;
 	bool		mOffAxisMatrixSetted = false;
+	
 
 };
 
