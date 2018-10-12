@@ -25,7 +25,11 @@ public class OffAxisProjection : ModuleRules
 			new string[]
 			{
 				"Core",
-				// ... add other public dependencies that you statically link with here ...
+                "Slate",
+                "SlateCore",
+                "InputCore",
+                "UMG",
+                // ... add other public dependencies that you statically link with here ...
 			}
             );
 			
@@ -35,13 +39,10 @@ public class OffAxisProjection : ModuleRules
 			{
 				"CoreUObject",
 				"Engine",
-				"Slate",
-				"SlateCore",
-                "ShaderCore",
-                "HeadMountedDisplay",
-                 "InputCore",
-                 "RHI",
-                 "RenderCore",
+			    "ShaderCore",
+                "HeadMountedDisplay",        
+                "RHI",
+                "RenderCore",
 				// ... add private dependencies that you statically link with here ...	
 			}
             );
