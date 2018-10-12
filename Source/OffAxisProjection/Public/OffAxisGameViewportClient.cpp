@@ -2,7 +2,6 @@
 
 #include "OffAxisGameViewportClient.h"
 
-
 #include "Engine/GameViewportClient.h"
 #include "HAL/FileManager.h"
 #include "Misc/CommandLine.h"
@@ -51,7 +50,7 @@
 #include "Components/BrushComponent.h"
 #include "Engine/GameEngine.h"
 #include "Logging/MessageLog.h"
-#include "Blueprint/UserWidget.h"
+#include "Runtime/UMG/Public/Blueprint/UserWidget.h"
 #include "GameFramework/GameUserSettings.h"
 #include "Engine/UserInterfaceSettings.h"
 #include "Slate/SceneViewport.h"
@@ -62,13 +61,6 @@
 #include "DynamicResolutionState.h"
 #include "ProfilingDebugging/CsvProfiler.h"
 
-
-//added during upgrade to 4.18
-#include "IXRTrackingSystem.h"
-
-//added during upgrade to 4.19
-#include "DynamicResolutionState.h"
-#include "LegacyScreenPercentageDriver.h"
 
 //added during plugin creation
 #include "Runtime/Engine/Classes//Engine//Canvas.h"

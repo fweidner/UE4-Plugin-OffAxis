@@ -1,7 +1,7 @@
 {
 	"FileVersion": 3,
 	"Version": 1,
-	"VersionName": "1.1.1",
+	"VersionName": "2.0.1",
 	"FriendlyName": "OffAxisPlugin",
 	"Description": "",
 	"Category": "Virtual Reality",
@@ -14,13 +14,13 @@
 	"IsBetaVersion": false,
 	"Installed": false,
 	"Modules": [
-    {
-      "Name": "OffAxisProjection",
-      "Type": "Runtime",
-      "LoadingPhase": "Default",
-      "WhitelistPlatforms": [
-        "Win64"
-      ]
-    }
+		{
+			"Name": "OffAxisProjection",
+			"Type": "Runtime",
+			"LoadingPhase": "Default",
+			"WhitelistPlatforms": [
+				"Win64"
+			]
+		}
 	]
 }
