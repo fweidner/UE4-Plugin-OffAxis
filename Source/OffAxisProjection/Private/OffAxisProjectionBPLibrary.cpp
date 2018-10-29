@@ -6,7 +6,6 @@
 UOffAxisProjectionBPLibrary::UOffAxisProjectionBPLibrary(const FObjectInitializer& ObjectInitializer)
 : Super(ObjectInitializer)
 {
-
 }
 
 float UOffAxisProjectionBPLibrary::OffAxisProjectionSampleFunction(float Param)
