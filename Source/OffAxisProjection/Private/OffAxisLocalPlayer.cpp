@@ -4,6 +4,8 @@
 
 #include "Engine.h"
 
+
+
 FSceneView * UOffAxisLocalPlayer::CalcSceneView(FSceneViewFamily * ViewFamily, FVector & OutViewLocation, FRotator & OutViewRotation, FViewport * Viewport, FViewElementDrawer * ViewDrawer, EStereoscopicPass StereoPass)
 {
 	FSceneView* tmp = ULocalPlayer::CalcSceneView(ViewFamily, OutViewLocation, OutViewRotation, Viewport, ViewDrawer, StereoPass);
@@ -241,22 +243,25 @@ FMatrix UOffAxisLocalPlayer::GenerateOffAxisMatrix(float _screenWidth, float _sc
 // Getter and Setter			//
 //////////////////////////////////
 
-void UOffAxisLocalPlayer::UpdateEyeRelativePosition(FVector _eyeRelativePosition)
+FVector UOffAxisLocalPlayer::UpdateEyeRelativePosition(FVector _eyeRelativePosition)
 {
 	s_EyePosition = _eyeRelativePosition;
+	return s_EyePosition;
 }
 
-void UOffAxisLocalPlayer::SetWidth(float _width)
+float UOffAxisLocalPlayer::SetWidth(float _width)
 {
 	s_Width = _width;
+	return s_Width;
 }
 
-void UOffAxisLocalPlayer::SetHeight(float _height)
+float UOffAxisLocalPlayer::SetHeight(float _height)
 {
 	s_Height = _height;
+	return s_Height;
 }
 
-void UOffAxisLocalPlayer::ToggleOffAxisMethod()
+bool UOffAxisLocalPlayer::ToggleOffAxisMethod()
 {
 	if (s_OffAxisVersion == 0)
 	{
@@ -266,51 +271,60 @@ void UOffAxisLocalPlayer::ToggleOffAxisMethod()
 	{
 		s_OffAxisVersion = 0;
 	}
-	PrintCurrentOffAxisVersioN();
+	PrintCurrentOffAxisVersion();
+	return s_OffAxisVersion;
 }
 
-void UOffAxisLocalPlayer::PrintCurrentOffAxisVersioN()
+FVector UOffAxisLocalPlayer::UpdateTmpVector(FVector _newVal)
+{
+	s_tmp = _newVal;
+	return s_tmp;
+}
+
+bool UOffAxisLocalPlayer::UpdateShowDebugMessages(bool _newVal)
+{
+	s_ShowDebugMessages = _newVal;
+	return s_ShowDebugMessages;
+}
+
+bool UOffAxisLocalPlayer::UseOffAxis(bool _newVal)
+{
+	s_bUseoffAxis = _newVal;
+	return s_bUseoffAxis;
+}
+
+void UOffAxisLocalPlayer::PrintCurrentOffAxisVersion()
 {
 	UE_LOG(LogConsoleResponse, Warning, TEXT("OffAxisVersion: %s"), (s_OffAxisVersion ? TEXT("Basic") : TEXT("Optimized"))); //if true (==1) -> basic, else opitmized
 	GEngine->AddOnScreenDebugMessage(30, 4, FColor::Cyan, FString::Printf(TEXT("OffAxisVersion: %s"), (s_OffAxisVersion ? TEXT("Basic") : TEXT("Optimized"))));
 }
 
-void UOffAxisLocalPlayer::UpdateEyeOffsetForStereo(float _newVal)
+//////////////////////////////////////////////////////////////////////////
+float UOffAxisLocalPlayer::UpdateEyeOffsetForStereo(float _newVal)
 {
 	s_EyeOffsetVal += _newVal;
 
 	if (s_ShowDebugMessages)
 		GEngine->AddOnScreenDebugMessage(40, 2, FColor::Cyan, FString::Printf(TEXT("EyeDistance: %f"), 2 * s_EyeOffsetVal));
+	return s_EyeOffsetVal;
 }
 
-void UOffAxisLocalPlayer::UpdateProjectionPlaneOffsetForStereo(float _newVal)
+float UOffAxisLocalPlayer::UpdateProjectionPlaneOffsetForStereo(float _newVal)
 {
 	s_ProjectionPlaneOffset += _newVal;
 	if (s_ShowDebugMessages)
 		GEngine->AddOnScreenDebugMessage(50, 2, FColor::Cyan, FString::Printf(TEXT("ProjectionPlaneOffset: %f"), s_ProjectionPlaneOffset));
+	return s_ProjectionPlaneOffset;
 }
 
-void UOffAxisLocalPlayer::ResetProjectionPlaneOffsetForStereo(float _newVal /*= 0.f*/)
+float UOffAxisLocalPlayer::ResetProjectionPlaneOffsetForStereo(float _newVal /*= 0.f*/)
 {
 	s_ProjectionPlaneOffset = _newVal;
+	return s_ProjectionPlaneOffset;
 }
 
-void UOffAxisLocalPlayer::ResetEyeOffsetForStereo(float _newVal)
+float UOffAxisLocalPlayer::ResetEyeOffsetForStereo(float _newVal)
 {
 	s_EyeOffsetVal = _newVal;
-}
-
-void UOffAxisLocalPlayer::UpdateTmpVector(FVector _newVal)
-{
-	s_tmp = _newVal;
-}
-
-void UOffAxisLocalPlayer::UpdateShowDebugMessages(bool _newVal)
-{
-	s_ShowDebugMessages = _newVal;
-}
-
-void UOffAxisLocalPlayer::UseOffAxis(bool _newVal)
-{
-	s_bUseoffAxis = _newVal;
+	return s_EyeOffsetVal;
 }

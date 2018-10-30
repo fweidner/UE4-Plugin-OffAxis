@@ -2,8 +2,11 @@
 
 #pragma once
 
+#include "OffAxisLocalPlayer.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "OffAxisProjectionBPLibrary.generated.h"
+
+
 
 /* 
 *	Function library class.
@@ -28,5 +31,10 @@ class UOffAxisProjectionBPLibrary : public UBlueprintFunctionLibrary
 	GENERATED_UCLASS_BODY()
 
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Execute Sample function", Keywords = "OffAxisProjection sample test testing"), Category = "OffAxisProjectionTesting")
-	static float OffAxisProjectionSampleFunction(float Param);
+		static float OffAxisProjectionSampleFunction(float Param);
+
+
+
 };
+
+
