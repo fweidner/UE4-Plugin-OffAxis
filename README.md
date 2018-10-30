@@ -27,7 +27,7 @@ https://answers.unrealengine.com/questions/65003/howto-modify-the-projection-mat
 
 ## How to use:
 Assuming you start with a Basic Code C++ project:
-- Update viewport class in Edit->Project Settings->General Settings 
+- Update LocalPlayer class in Edit->Project Settings->General Settings 
 - Adjust Input mappings to your Config/DefaultInput.ini
 - Drag the OffAxisActor in your scene
 - Set position of OffAxisActor to 0,0,0: This is what you see.
