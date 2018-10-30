@@ -24,19 +24,21 @@ class OFFAXISPROJECTION_API UOffAxisLocalPlayer : public ULocalPlayer
 
 public:
 
-	void SetOffAxisMatrix(FMatrix OffAxisMatrix);
-
 	void UpdateProjectionMatrix(FSceneView * View, FMatrix OffAxisMatrix, EStereoscopicPass _Pass);
-
-	FMatrix GenerateOffAxisMatrix(float _screenWidth, float _screenHeight, FVector _eyeRelativePositon);
 
 	FMatrix GenerateOffAxisMatrix(float _screenWidth, float _screenHeight, FVector _eyeRelativePositon, EStereoscopicPass _PassType);
 
-	FMatrix GenerateOffAxisMatrix_Internal(float _screenWidth, float _screenHeight, FVector _eyeRelativePositon);
+	FMatrix GenerateOffAxisMatrix_Internal_Slow(float _screenWidth, float _screenHeight, FVector _eyeRelativePositon);
+	FMatrix GenerateOffAxisMatrix_Internal_Fast(FVector _eyeRelativePositon);
+
 
 	FMatrix FrustumMatrix(float left, float right, float bottom, float top, float nearVal, float farVal);
 
 	FMatrix _AdjustProjectionMatrixForRHI(const FMatrix& InProjectionMatrix);
+
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "InitOffAxisProjection", Keywords = "OffAxisProjection init"), Category = "OffAxisProjection")
+		static void InitOffAxisProjection_Fast(float _screenWidth, float _screenHeight);
+
 
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UpdateEyeRelativePosition", Keywords = "OffAxisProjection update relative eye position "), Category = "OffAxisProjection")
 		static FVector UpdateEyeRelativePosition(FVector _eyeRelativePosition);
@@ -76,9 +78,9 @@ public:
 		static float ResetEyeOffsetForStereo(float _newVal = 3.200001);
 
 private: 
-	bool mOffAxisMatrixSetted = false;
 	FMatrix mOffAxisMatrix = FMatrix();
-
+	float f = 10000.f;
+	float n = .1f;
 };
 
 //////////////////////////////////////////////////////////////////////////
@@ -91,8 +93,16 @@ static FVector s_tmp = FVector();
 
 //////////////////////////////////////////////////////////////////////////
 static FVector s_EyePosition = FVector();
-static 	bool s_bUseoffAxis = false;
+static bool s_bUseoffAxis = false;
 static bool s_OffAxisVersion = 1;
 static float s_Width = 0.f;
 static float s_Height = 0.f;
+
+static FVector TopLeftCorner_ = FVector();
+static FVector BottomRightCorner_ = FVector();
+
+static float GFarClippingPlane = 10000.f;
+
+static FMatrix Frustum;
+
 

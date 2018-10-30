@@ -5,18 +5,26 @@
 #include "Engine.h"
 
 
+#include "Runtime/Core/Public/GenericPlatform/GenericPlatformTime.h" // for FPlatformTime
+
 
 FSceneView * UOffAxisLocalPlayer::CalcSceneView(FSceneViewFamily * ViewFamily, FVector & OutViewLocation, FRotator & OutViewRotation, FViewport * Viewport, FViewElementDrawer * ViewDrawer, EStereoscopicPass StereoPass)
 {
+	double start = FPlatformTime::Seconds();
+
 	FSceneView* tmp = ULocalPlayer::CalcSceneView(ViewFamily, OutViewLocation, OutViewRotation, Viewport, ViewDrawer, StereoPass);
 
-	if (s_bUseoffAxis && mOffAxisMatrixSetted)
+	if (s_bUseoffAxis)
 	{
-		SetOffAxisMatrix(GenerateOffAxisMatrix(s_Width, s_Height, s_EyePosition, StereoPass));
-		UpdateProjectionMatrix(tmp, mOffAxisMatrix, StereoPass);
+		UpdateProjectionMatrix(tmp, GenerateOffAxisMatrix(s_Width, s_Height, s_EyePosition, StereoPass), StereoPass);
 	}
 
 	GEngine->AddOnScreenDebugMessage(200, 4, FColor::Red, FString::Printf(TEXT("CalcSceneViewLocalPlayer")));
+
+	double end = FPlatformTime::Seconds();
+
+	if (s_ShowDebugMessages)
+		GEngine->AddOnScreenDebugMessage(0, 1, FColor::Red, FString::Printf(TEXT("TimeToOffAxis in: %f s."), end - start));
 
 	return tmp;
 }
@@ -37,13 +45,7 @@ FMatrix UOffAxisLocalPlayer::FrustumMatrix(float left, float right, float bottom
 	return Result;
 }
 
-void UOffAxisLocalPlayer::SetOffAxisMatrix(FMatrix OffAxisMatrix)
-{
-	mOffAxisMatrixSetted = true;
-	mOffAxisMatrix = OffAxisMatrix;
-}
-
- void UOffAxisLocalPlayer::UpdateProjectionMatrix(FSceneView* View, FMatrix OffAxisMatrix, EStereoscopicPass _Pass)
+void UOffAxisLocalPlayer::UpdateProjectionMatrix(FSceneView* View, FMatrix OffAxisMatrix, EStereoscopicPass _Pass)
 {
 	FMatrix stereoProjectionMatrix = OffAxisMatrix;
 
@@ -88,7 +90,23 @@ FMatrix UOffAxisLocalPlayer::_AdjustProjectionMatrixForRHI(const FMatrix& InProj
 	return InProjectionMatrix * ClipSpaceFixScale * ClipSpaceFixTranslate;
 }
 
-FMatrix UOffAxisLocalPlayer::GenerateOffAxisMatrix_Internal(float _screenWidth, float _screenHeight, FVector _eyeRelativePositon)
+void UOffAxisLocalPlayer::InitOffAxisProjection_Fast(float _screenWidth, float _screenHeight)
+{
+	TopLeftCorner_ = FVector(-_screenWidth / 2.f, -_screenHeight / 2.f, GNearClippingPlane);
+	BottomRightCorner_ = FVector(_screenWidth / 2.f, _screenHeight / 2.f, GNearClippingPlane);
+
+
+	FMatrix Frustum;
+	Frustum.SetIdentity();
+	Frustum.M[2][2] = -(GFarClippingPlane + GNearClippingPlane) / (GFarClippingPlane - GNearClippingPlane);
+	Frustum.M[2][3] = -1.0f;
+	Frustum.M[3][2] = -(2.f*GFarClippingPlane * GNearClippingPlane) / (GFarClippingPlane - GNearClippingPlane);
+	Frustum.M[3][3] = 0.0f;
+
+
+}
+
+FMatrix UOffAxisLocalPlayer::GenerateOffAxisMatrix_Internal_Slow(float _screenWidth, float _screenHeight, FVector _eyeRelativePositon)
 {
 	FMatrix result;
 
@@ -99,135 +117,128 @@ FMatrix UOffAxisLocalPlayer::GenerateOffAxisMatrix_Internal(float _screenWidth, 
 	float l, r, b, t, n, f, nd;
 
 	n = GNearClippingPlane;
-	f = 10000.f;
+	f = GFarClippingPlane;
 
-	FMatrix matFlipZ;
-	matFlipZ.SetIdentity();
+	//this is analog to: http://csc.lsu.edu/~kooima/articles/genperspective/
 
-	//FMatrix OffAxisProjectionMatrix;
+	//Careful: coordinate system! left-handed, y-up
 
-	if (s_OffAxisVersion == 0)
+	//lower left, lower right, upper left, eye pos
+	const FVector pa(-width / 2.0f, -height / 2.0f, n);
+	const FVector pb(width / 2.0f, -height / 2.0f, n);
+	const FVector pc(-width / 2.0f, height / 2.0f, n);
+	const FVector pe(eyePosition.X, eyePosition.Y, eyePosition.Z);
+
+	// Compute the screen corner vectors.
+	FVector va, vb, vc;
+	va = pa - pe;
+	vb = pb - pe;
+	vc = pc - pe;
+
+	// Compute an orthonormal basis for the screen.
+	FVector vr, vu, vn;
+	vr = pb - pa;
+	vr /= vr.Normalize();
+	vu = pc - pa;
+	vu /= vu.Normalize();
+	vn = FVector::CrossProduct(vr, vu);
+	vn /= vn.Normalize();
+
+	// Find the distance from the eye to screen plane.
+	float d = -FVector::DotProduct(va, vn);
+
+	nd = n / d;
+
+	// Find the extent of the perpendicular projection.
+	l = FVector::DotProduct(vr, va) * nd;
+	r = FVector::DotProduct(vr, vb) * nd;
+	b = FVector::DotProduct(vu, va) * nd;
+	t = FVector::DotProduct(vu, vc) * nd;
+
+	// Load the perpendicular projection.
+	result = FrustumMatrix(l, r, b, t, n, f);
+	//GEngine->AddOnScreenDebugMessage(40, 2, FColor::Red, FString::Printf(TEXT("FrustumMatrix_ORIG: %s"), *result.ToString()));
+
+	// Rotate the projection to be non-perpendicular. 
+	// This is currently unused until the screen is used.
+	FMatrix M;
+	M.SetIdentity();
+	M.M[0][0] = vr.X; M.M[0][1] = vr.Y; M.M[0][2] = vr.Z;
+	M.M[1][0] = vu.X; M.M[1][1] = vu.Y; M.M[1][2] = vu.Z;
+	M.M[2][0] = vn.X; M.M[2][1] = vn.Y; M.M[2][2] = vn.Z;
+	M.M[3][3] = 1.0f;
+	result = result * M;
+
+	if (s_ShowDebugMessages)
 	{
-		FVector topLeftCorner(-width / 2.f, -height / 2.f, n);
-		FVector bottomRightCorner(width / 2.f, height / 2.f, n);
-
-		FVector eyeToTopLeft = topLeftCorner - _eyeRelativePositon;
-		FVector eyeToTopLeftNear = n / eyeToTopLeft.Z * eyeToTopLeft;
-		FVector eyeToBottomRight = bottomRightCorner - _eyeRelativePositon;
-		FVector eyeToBottomRightNear = eyeToBottomRight / eyeToBottomRight.Z * n;
-
-		l = -eyeToTopLeftNear.X;
-		r = -eyeToBottomRightNear.X;
-		t = -eyeToBottomRightNear.Y;
-		b = -eyeToTopLeftNear.Y;
-
-
-		//Frustum: l, r, b, t, near, far
-		result = FrustumMatrix(l, r, b, t, n, f);
-
-	}
-	else
-	{
-		//this is analog to: http://csc.lsu.edu/~kooima/articles/genperspective/
-
-		//Careful: coordinate system! left-handed, y-up
-
-		//lower left, lower right, upper left, eye pos
-		const FVector pa(-width / 2.0f, -height / 2.0f, n);
-		const FVector pb(width / 2.0f, -height / 2.0f, n);
-		const FVector pc(-width / 2.0f, height / 2.0f, n);
-		const FVector pe(eyePosition.X, eyePosition.Y, eyePosition.Z);
-
-		// Compute the screen corner vectors.
-		FVector va, vb, vc;
-		va = pa - pe;
-		vb = pb - pe;
-		vc = pc - pe;
-
-		// Compute an orthonormal basis for the screen.
-		FVector vr, vu, vn;
-		vr = pb - pa;
-		vr /= vr.Normalize();
-		vu = pc - pa;
-		vu /= vu.Normalize();
-		vn = FVector::CrossProduct(vr, vu);
-		vn /= vn.Normalize();
-
-		// Find the distance from the eye to screen plane.
-		float d = -FVector::DotProduct(va, vn);
-
-		nd = n / d;
-
-		// Find the extent of the perpendicular projection.
-		l = FVector::DotProduct(vr, va) * nd;
-		r = FVector::DotProduct(vr, vb) * nd;
-		b = FVector::DotProduct(vu, va) * nd;
-		t = FVector::DotProduct(vu, vc) * nd;
-
-		// Load the perpendicular projection.
-		result = FrustumMatrix(l, r, b, t, n, f);
-		//GEngine->AddOnScreenDebugMessage(40, 2, FColor::Red, FString::Printf(TEXT("FrustumMatrix_ORIG: %s"), *result.ToString()));
-
-		// Rotate the projection to be non-perpendicular. 
-		// This is currently unused until the screen is used.
-		FMatrix M;
-		M.SetIdentity();
-		M.M[0][0] = vr.X; M.M[0][1] = vr.Y; M.M[0][2] = vr.Z;
-		M.M[1][0] = vu.X; M.M[1][1] = vu.Y; M.M[1][2] = vu.Z;
-		M.M[2][0] = vn.X; M.M[2][1] = vn.Y; M.M[2][2] = vn.Z;
-		M.M[3][3] = 1.0f;
-		result = result * M;
-
-		if (s_ShowDebugMessages)
-		{
-			GEngine->AddOnScreenDebugMessage(10, 2, FColor::Red, FString::Printf(TEXT("pa: %s"), *pa.ToString()));
-			GEngine->AddOnScreenDebugMessage(20, 2, FColor::Red, FString::Printf(TEXT("pb: %s"), *pb.ToString()));
-			GEngine->AddOnScreenDebugMessage(30, 2, FColor::Red, FString::Printf(TEXT("pc: %s"), *pc.ToString()));
-			GEngine->AddOnScreenDebugMessage(40, 2, FColor::Red, FString::Printf(TEXT("pe: %s"), *pe.ToString()));
-			GEngine->AddOnScreenDebugMessage(50, 2, FColor::Red, FString::Printf(TEXT("vr: %s"), *vu.ToString()));
-			GEngine->AddOnScreenDebugMessage(60, 2, FColor::Red, FString::Printf(TEXT("vu: %s"), *vr.ToString()));
-			GEngine->AddOnScreenDebugMessage(70, 2, FColor::Red, FString::Printf(TEXT("vn: %s"), *vn.ToString()));
-			GEngine->AddOnScreenDebugMessage(80, 4, FColor::Red, FString::Printf(TEXT("Frustum: %f \t %f \t %f \t %f \t %f \t %f \t "), l, r, b, t, n, f));
-			GEngine->AddOnScreenDebugMessage(90, 2, FColor::Red, FString::Printf(TEXT("Eye-Screen-Distance: %f"), d));
-			GEngine->AddOnScreenDebugMessage(100, 4, FColor::Red, FString::Printf(TEXT("nd: %f"), nd));
-		}
-
-
+		GEngine->AddOnScreenDebugMessage(10, 2, FColor::Red, FString::Printf(TEXT("pa: %s"), *pa.ToString()));
+		GEngine->AddOnScreenDebugMessage(20, 2, FColor::Red, FString::Printf(TEXT("pb: %s"), *pb.ToString()));
+		GEngine->AddOnScreenDebugMessage(30, 2, FColor::Red, FString::Printf(TEXT("pc: %s"), *pc.ToString()));
+		GEngine->AddOnScreenDebugMessage(40, 2, FColor::Red, FString::Printf(TEXT("pe: %s"), *pe.ToString()));
+		GEngine->AddOnScreenDebugMessage(50, 2, FColor::Red, FString::Printf(TEXT("vr: %s"), *vu.ToString()));
+		GEngine->AddOnScreenDebugMessage(60, 2, FColor::Red, FString::Printf(TEXT("vu: %s"), *vr.ToString()));
+		GEngine->AddOnScreenDebugMessage(70, 2, FColor::Red, FString::Printf(TEXT("vn: %s"), *vn.ToString()));
+		GEngine->AddOnScreenDebugMessage(80, 4, FColor::Red, FString::Printf(TEXT("Frustum: %f \t %f \t %f \t %f \t %f \t %f \t "), l, r, b, t, n, f));
+		GEngine->AddOnScreenDebugMessage(90, 2, FColor::Red, FString::Printf(TEXT("Eye-Screen-Distance: %f"), d));
+		GEngine->AddOnScreenDebugMessage(100, 4, FColor::Red, FString::Printf(TEXT("nd: %f"), nd));
 	}
 
 	// Move the apex of the frustum to the origin.
 	result = FTranslationMatrix(-eyePosition) * result;
-	//GEngine->AddOnScreenDebugMessage(41, 2, FColor::Red, FString::Printf(TEXT("FrustumMatrix_MOV: %s"), *result.ToString()));
 
 	//scales matrix for UE4 and RHI
 	result *= 1.0f / result.M[0][0];
-	//GEngine->AddOnScreenDebugMessage(42, 2, FColor::Red, FString::Printf(TEXT("FrustumMatrix_DIV: %s"), *result.ToString()));
 
 	result.M[2][2] = 0.f; //?
 	result.M[3][2] = n; //?
 
-	//GEngine->AddOnScreenDebugMessage(49, 2, FColor::Red, FString::Printf(TEXT("FrustumMatrix_MOD : %s"), *result.ToString()));
+	return result;
+}
+
+
+FMatrix UOffAxisLocalPlayer::GenerateOffAxisMatrix_Internal_Fast(FVector _eyeRelativePositon)
+{
+	FVector eyeToTopLeft = TopLeftCorner_ - _eyeRelativePositon;
+	FVector eyeToTopLeftNear = GNearClippingPlane / eyeToTopLeft.Z * eyeToTopLeft;
+	
+	FVector eyeToBottomRight = BottomRightCorner_ - _eyeRelativePositon;
+	FVector eyeToBottomRightNear = eyeToBottomRight / eyeToBottomRight.Z * GNearClippingPlane;
+
+	//Frustum: l, r, b, t, near, far
+	
+	
+// 	FMatrix result = Frustum;
+// 	Frustum.M[0][0] = (2.0f * GNearClippingPlane) / (-eyeToBottomRightNear.X - -eyeToTopLeftNear.X);
+// 	Frustum.M[1][1] = (2.0f * GNearClippingPlane) / (-eyeToBottomRightNear.Y - -eyeToTopLeftNear.Y);
+// 	Frustum.M[2][0] = (-eyeToBottomRightNear.X + -eyeToTopLeftNear.X) / (-eyeToBottomRightNear.X - -eyeToTopLeftNear.X);
+// 	Frustum.M[2][1] = (-eyeToBottomRightNear.Y + -eyeToTopLeftNear.Y) / (-eyeToBottomRightNear.Y - -eyeToTopLeftNear.Y);
+
+	FMatrix result = FrustumMatrix(-eyeToTopLeftNear.X, -eyeToBottomRightNear.X, -eyeToTopLeftNear.Y, -eyeToBottomRightNear.Y, GNearClippingPlane, GFarClippingPlane);
+	
+	// Move the apex of the frustum to the origin.
+	result = FTranslationMatrix(-_eyeRelativePositon) * result;
+
+	//scales matrix for UE4 and RHI
+	result *= 1.0f / result.M[0][0];
+
+	result.M[2][2] = 0.f; //?
+	result.M[3][2] = GNearClippingPlane; //?
 
 	return result;
 }
 
-FMatrix UOffAxisLocalPlayer::GenerateOffAxisMatrix(float _screenWidth, float _screenHeight, FVector _eyeRelativePositon)
-{
-	return GenerateOffAxisMatrix_Internal(_screenWidth, _screenHeight, _eyeRelativePositon);
-}
-
 FMatrix UOffAxisLocalPlayer::GenerateOffAxisMatrix(float _screenWidth, float _screenHeight, FVector _eyeRelativePositon, EStereoscopicPass _PassType)
 {
-	FVector tmpeye = _eyeRelativePositon;
+	FVector adjustedEyePositionForS3D = _eyeRelativePositon;
 	switch (_PassType)
 	{
 	case eSSP_FULL:
 		break;
 	case eSSP_LEFT_EYE:
-		tmpeye += FVector(s_EyeOffsetVal, 0.f, 0.f);
+		adjustedEyePositionForS3D += FVector(s_EyeOffsetVal, 0.f, 0.f);
 		break;
 	case eSSP_RIGHT_EYE:
-		tmpeye -= FVector(s_EyeOffsetVal, 0.f, 0.f);
+		adjustedEyePositionForS3D -= FVector(s_EyeOffsetVal, 0.f, 0.f);
 		break;
 	case eSSP_MONOSCOPIC_EYE:
 		break;
@@ -236,7 +247,15 @@ FMatrix UOffAxisLocalPlayer::GenerateOffAxisMatrix(float _screenWidth, float _sc
 	}
 
 
-	return GenerateOffAxisMatrix(_screenWidth, _screenHeight, tmpeye);
+	if (s_OffAxisVersion == 0)
+	{
+		return GenerateOffAxisMatrix_Internal_Fast(adjustedEyePositionForS3D);
+	}
+	else
+	{
+		return GenerateOffAxisMatrix_Internal_Slow(_screenWidth, _screenHeight, adjustedEyePositionForS3D);
+	}
+
 }
 
 //////////////////////////////////
