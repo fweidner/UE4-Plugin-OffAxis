@@ -24,7 +24,7 @@ class OFFAXISPROJECTION_API UOffAxisLocalPlayer : public ULocalPlayer
 
 public:
 
-	void UpdateProjectionMatrix(FSceneView * View, FMatrix OffAxisMatrix, EStereoscopicPass _Pass);
+	void UpdateProjectionMatrix_Internal(FSceneView * View, FMatrix OffAxisMatrix, EStereoscopicPass _Pass);
 
 	FMatrix GenerateOffAxisMatrix(float _screenWidth, float _screenHeight, FVector _eyeRelativePositon, EStereoscopicPass _PassType);
 
