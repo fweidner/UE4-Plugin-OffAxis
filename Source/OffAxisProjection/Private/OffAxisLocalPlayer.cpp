@@ -16,7 +16,7 @@ FSceneView * UOffAxisLocalPlayer::CalcSceneView(FSceneViewFamily * ViewFamily, F
 
 	if (s_bUseoffAxis)
 	{
-		UpdateProjectionMatrix(tmp, GenerateOffAxisMatrix(s_Width, s_Height, s_EyePosition, StereoPass), StereoPass);
+		UpdateProjectionMatrix_Internal(tmp, GenerateOffAxisMatrix(s_Width, s_Height, s_EyePosition, StereoPass), StereoPass);
 	}
 
 	GEngine->AddOnScreenDebugMessage(200, 4, FColor::Red, FString::Printf(TEXT("CalcSceneViewLocalPlayer")));
@@ -45,7 +45,7 @@ FMatrix UOffAxisLocalPlayer::FrustumMatrix(float left, float right, float bottom
 	return Result;
 }
 
-void UOffAxisLocalPlayer::UpdateProjectionMatrix(FSceneView* View, FMatrix OffAxisMatrix, EStereoscopicPass _Pass)
+void UOffAxisLocalPlayer::UpdateProjectionMatrix_Internal(FSceneView* View, FMatrix OffAxisMatrix, EStereoscopicPass _Pass)
 {
 	FMatrix stereoProjectionMatrix = OffAxisMatrix;
 
@@ -75,9 +75,11 @@ void UOffAxisLocalPlayer::UpdateProjectionMatrix(FSceneView* View, FMatrix OffAx
 	axisChanger.M[2][1] = 1.0f;
 
 	View->ProjectionMatrixUnadjustedForRHI = View->ViewMatrices.GetViewMatrix().Inverse() * axisChanger * stereoProjectionMatrix;
+	
 
 	View->UpdateProjectionMatrix(View->ViewMatrices.GetViewMatrix().Inverse() * axisChanger * stereoProjectionMatrix);
 
+	View->UpdateViewMatrix();
 }
 
 FMatrix UOffAxisLocalPlayer::_AdjustProjectionMatrixForRHI(const FMatrix& InProjectionMatrix)
@@ -194,7 +196,6 @@ FMatrix UOffAxisLocalPlayer::GenerateOffAxisMatrix_Internal_Slow(float _screenWi
 
 	return result;
 }
-
 
 FMatrix UOffAxisLocalPlayer::GenerateOffAxisMatrix_Internal_Fast(FVector _eyeRelativePositon)
 {
