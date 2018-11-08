@@ -3,8 +3,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "EOffAxisMethod.h"
 #include "Engine/LocalPlayer.h"
 #include "OffAxisLocalPlayer.generated.h"
+
+
+
 
 /**
  * 
@@ -30,15 +34,16 @@ public:
 
 	FMatrix GenerateOffAxisMatrix_Internal_Slow(float _screenWidth, float _screenHeight, FVector _eyeRelativePositon);
 	FMatrix GenerateOffAxisMatrix_Internal_Fast(FVector _eyeRelativePositon);
+	FMatrix GenerateOffAxisMatrix_Internal_Test(float _screenWidth, float _screenHeight, FVector _eyeRelativePositon);
 
 
 	FMatrix FrustumMatrix(float left, float right, float bottom, float top, float nearVal, float farVal);
 
-	FMatrix _AdjustProjectionMatrixForRHI(const FMatrix& InProjectionMatrix);
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "PrintCurrentOffAxisVersion", Keywords = "OffAxisProjection print"), Category = "OffAxisProjection")
+		static FText GetOffAxisEnumValueAsString(EOffAxisMethod _val);
 
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "InitOffAxisProjection", Keywords = "OffAxisProjection init"), Category = "OffAxisProjection")
 		static void InitOffAxisProjection_Fast(float _screenWidth, float _screenHeight);
-
 
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UpdateEyeRelativePosition", Keywords = "OffAxisProjection update relative eye position "), Category = "OffAxisProjection")
 		static FVector UpdateEyeRelativePosition(FVector _eyeRelativePosition);
@@ -50,10 +55,13 @@ public:
 		static float SetHeight(float _height);
 
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "ToggleOffAxisMethod", Keywords = "OffAxisProjection toggle method "), Category = "OffAxisProjection")
-		static bool ToggleOffAxisMethod();
+		static EOffAxisMethod ToggleOffAxisMethod();
 
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "PrintCurrentOffAxisVersion", Keywords = "OffAxisProjection print"), Category = "OffAxisProjection")
 		static void PrintCurrentOffAxisVersion();
+
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "SetOffAxisMethod", Keywords = "OffAxisProjection set method "), Category = "OffAxisProjection")
+		static EOffAxisMethod SetOffAxisMethod(EOffAxisMethod _newMethod, bool _bShouldPrintLogMessage);
 
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UpdateTmpVector", Keywords = "OffAxisProjection tmp update"), Category = "OffAxisProjection")
 		static FVector UpdateTmpVector(FVector _newVal);
@@ -77,6 +85,12 @@ public:
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "ResetEyeOffsetForStereo", Keywords = "OffAxisProjection eye offset eyeoffset reset "), Category = "OffAxisProjection")
 		static float ResetEyeOffsetForStereo(float _newVal = 3.200001);
 
+	//////////////////////////////////////////////////////////////////////////
+
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "SetI", Keywords = "OffAxisProjection SetI"), Category = "OffAxisProjection")
+		static int SetI(int _newVal);
+
+
 private: 
 	FMatrix mOffAxisMatrix = FMatrix();
 	float f = 10000.f;
@@ -94,7 +108,9 @@ static FVector s_tmp = FVector();
 //////////////////////////////////////////////////////////////////////////
 static FVector s_EyePosition = FVector();
 static bool s_bUseoffAxis = false;
-static bool s_OffAxisVersion = 1;
+
+static EOffAxisMethod s_OffAxisMethod = EOffAxisMethod::Fast;
+
 static float s_Width = 0.f;
 static float s_Height = 0.f;
 
@@ -105,4 +121,5 @@ static float GFarClippingPlane = 10000.f;
 
 static FMatrix Frustum;
 
-
+//////////////////////////////////////////////////////////////////////////
+static int i = 0;

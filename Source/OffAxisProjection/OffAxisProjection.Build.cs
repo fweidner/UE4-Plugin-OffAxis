@@ -7,7 +7,8 @@ public class OffAxisProjection : ModuleRules
 {
 	public OffAxisProjection(ReadOnlyTargetRules Target) : base(Target)
 	{
-		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
+        //PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
+        PrivatePCHHeaderFile = "Public/OffAxisProjection.h";
 
         PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "Public"));
 				
