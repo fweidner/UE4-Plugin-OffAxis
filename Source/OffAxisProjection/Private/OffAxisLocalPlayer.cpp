@@ -538,3 +538,17 @@ bool UOffAxisLocalPlayer::OffAxisDeprojectScreenToWorld(APlayerController const*
 	return false;
 }
 
+
+bool UOffAxisLocalPlayer::OffAxisLineTraceByChannel(UObject* WorldContextObject, /*out*/ struct FHitResult& OutHit, FVector _eyeRelativePosition, FVector _end)
+{
+
+
+	
+	FVector _eyeRelativePositioninUE4Coord = FVector(_eyeRelativePosition.Z, _eyeRelativePosition.X, _eyeRelativePosition.Y);
+
+
+	UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull);
+
+	return World->LineTraceSingleByChannel(OutHit, _eyeRelativePositioninUE4Coord, _end, ECollisionChannel::ECC_Visibility);
+
+}
