@@ -65,6 +65,8 @@ void UOffAxisLocalPlayer::UpdateProjectionMatrix_Internal(FSceneView* View, FMat
 		break;
 	}
 
+	//stereoProjectionMatrix = FRotationMatrix(FRotator(s_tmp.X, s_tmp.Y, s_tmp.Z)) * OffAxisMatrix;
+
 	FMatrix axisChanger; //rotates everything to UE4 coordinate system.
 	axisChanger.SetIdentity();
 	axisChanger.M[0][0] = 0.0f;
@@ -244,7 +246,7 @@ FMatrix UOffAxisLocalPlayer::GenerateOffAxisMatrix_Internal_Test(float _screenWi
 		pc = FVector(-width / 2.0f + s_tmp.X, height / 2.0f + s_tmp.Y, n + s_tmp.Z);
 		pe = FVector(eyePosition.X + s_tmp.X, eyePosition.Y + s_tmp.Y, eyePosition.Z + s_tmp.Z);
 		break;
-	case 1: // only z uni
+	case 1: // everything
 		GEngine->AddOnScreenDebugMessage(150, 2, FColor::Red, FString::Printf(TEXT("Using I = 1")));
 		pa = FVector(-width / 2.0f + s_tmp.X, -height / 2.0f + s_tmp.Y, n + s_tmp.Z);
 		pb = FVector(width / 2.0f + s_tmp.X, -height / 2.0f + s_tmp.Y, n + s_tmp.Z);
@@ -257,7 +259,7 @@ FMatrix UOffAxisLocalPlayer::GenerateOffAxisMatrix_Internal_Test(float _screenWi
 		pb = FVector(width / 2.0f, -height / 2.0f, n);
 		pc = FVector(-width / 2.0f + s_tmp.X, height / 2.0f + s_tmp.Y, n + s_tmp.Z);
 		pe = FVector(eyePosition.X, eyePosition.Y, eyePosition.Z);
-	case 3: //only z opp
+	case 3: //only z tilt
 		GEngine->AddOnScreenDebugMessage(150, 2, FColor::Red, FString::Printf(TEXT("Using I = 2")));
 		pa = FVector(-width / 2.0f, -height / 2.0f, n - s_tmp.Z);
 		pb = FVector(width / 2.0f, -height / 2.0f, n - s_tmp.Z);
@@ -269,6 +271,20 @@ FMatrix UOffAxisLocalPlayer::GenerateOffAxisMatrix_Internal_Test(float _screenWi
 		pa = FVector(-width / 2.0f + s_tmp.X, -height / 2.0f + s_tmp.Y, n - s_tmp.Z);
 		pb = FVector(width / 2.0f + s_tmp.X, -height / 2.0f + s_tmp.Y, n - s_tmp.Z);
 		pc = FVector(-width / 2.0f + s_tmp.X, height / 2.0f + s_tmp.Y, n + s_tmp.Z);
+		pe = FVector(eyePosition.X, eyePosition.Y, eyePosition.Z);
+		break;
+	case 5: //nothing
+		GEngine->AddOnScreenDebugMessage(150, 2, FColor::Red, FString::Printf(TEXT("Using I = ?")));
+		pa = FVector(-width / 2.0f, -height / 2.0f, n);
+		pb = FVector(width / 2.0f, -height / 2.0f, n);
+		pc = FVector(-width / 2.0f, height / 2.0f, n);
+		pe = FVector(eyePosition.X, eyePosition.Y, eyePosition.Z);
+		break;
+	case 6: 
+		GEngine->AddOnScreenDebugMessage(150, 2, FColor::Red, FString::Printf(TEXT("Using I = 2")));
+		pa = FVector(-width / 2.0f, -height / 2.0f , n - s_tmp.Z);
+		pb = FVector(width / 2.0f, -height / 2.0f, n - s_tmp.Z);
+		pc = FVector(-width / 2.0f, height / 2.0f , n);
 		pe = FVector(eyePosition.X, eyePosition.Y, eyePosition.Z);
 		break;
 	default: //nothing
@@ -317,7 +333,7 @@ FMatrix UOffAxisLocalPlayer::GenerateOffAxisMatrix_Internal_Test(float _screenWi
 	M.M[1][0] = vu.X; M.M[1][1] = vu.Y; M.M[1][2] = vu.Z;
 	M.M[2][0] = vn.X; M.M[2][1] = vn.Y; M.M[2][2] = vn.Z;
 	M.M[3][3] = 1.0f;
-	result = result * M;
+	//result = result * M;
 
 	if (s_ShowDebugMessages)
 	{
@@ -325,9 +341,9 @@ FMatrix UOffAxisLocalPlayer::GenerateOffAxisMatrix_Internal_Test(float _screenWi
 		GEngine->AddOnScreenDebugMessage(20, 2, FColor::Orange, FString::Printf(TEXT("pb: %s"), *pb.ToString()));
 		GEngine->AddOnScreenDebugMessage(31, 2, FColor::Orange, FString::Printf(TEXT("pc: %s"), *pc.ToString()));
 		GEngine->AddOnScreenDebugMessage(40, 2, FColor::Orange, FString::Printf(TEXT("pe: %s"), *pe.ToString()));
-		GEngine->AddOnScreenDebugMessage(50, 2, FColor::Red, FString::Printf(TEXT("vr: %s"), *vu.ToString()));
-		GEngine->AddOnScreenDebugMessage(60, 2, FColor::Red, FString::Printf(TEXT("vu: %s"), *vr.ToString()));
-		GEngine->AddOnScreenDebugMessage(70, 2, FColor::Red, FString::Printf(TEXT("vn: %s"), *vn.ToString()));
+		GEngine->AddOnScreenDebugMessage(50, 2, FColor::Black, FString::Printf(TEXT("vr: %s"), *vu.ToString()));
+		GEngine->AddOnScreenDebugMessage(60, 2, FColor::Black, FString::Printf(TEXT("vu: %s"), *vr.ToString()));
+		GEngine->AddOnScreenDebugMessage(70, 2, FColor::Black, FString::Printf(TEXT("vn: %s"), *vn.ToString()));
 		GEngine->AddOnScreenDebugMessage(80, 4, FColor::Red, FString::Printf(TEXT("Frustum: %f \t %f \t %f \t %f \t %f \t %f \t "), l, r, b, t, n, f));
 		GEngine->AddOnScreenDebugMessage(90, 2, FColor::Red, FString::Printf(TEXT("Eye-Screen-Distance: %f"), d));
 		GEngine->AddOnScreenDebugMessage(100, 4, FColor::Red, FString::Printf(TEXT("nd: %f"), nd));
@@ -340,7 +356,7 @@ FMatrix UOffAxisLocalPlayer::GenerateOffAxisMatrix_Internal_Test(float _screenWi
 	result *= 1.0f / result.M[0][0];
 
 	result.M[2][2] = 0.f; //?
-//	result.M[3][2] = n; //?
+	result.M[3][2] = n; //?
 
 	return result;
 }
@@ -496,6 +512,6 @@ FText UOffAxisLocalPlayer::GetOffAxisEnumValueAsString(EOffAxisMethod _val)
 int UOffAxisLocalPlayer::SetI(int _newVal)
 {
 	i = _newVal;
-	GEngine->AddOnScreenDebugMessage(150, 2, FColor::Red, FString::Printf(TEXT("New I: %i"), i));
+	GEngine->AddOnScreenDebugMessage(155, 2, FColor::Red, FString::Printf(TEXT("New I: %i"), i));
 	return i;
 }
