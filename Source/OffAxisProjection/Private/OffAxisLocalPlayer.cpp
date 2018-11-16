@@ -6,7 +6,7 @@
 
 
 #include "Runtime/Core/Public/GenericPlatform/GenericPlatformTime.h" // for FPlatformTime
-
+#include "Runtime/Engine/Classes/Engine/GameViewportClient.h" //for ViewportClient
 
 FSceneView * UOffAxisLocalPlayer::CalcSceneView(FSceneViewFamily * ViewFamily, FVector & OutViewLocation, FRotator & OutViewRotation, FViewport * Viewport, FViewElementDrawer * ViewDrawer, EStereoscopicPass StereoPass)
 {
@@ -18,13 +18,13 @@ FSceneView * UOffAxisLocalPlayer::CalcSceneView(FSceneViewFamily * ViewFamily, F
 	{
 		UpdateProjectionMatrix_Internal(tmp, GenerateOffAxisMatrix(s_Width, s_Height, s_EyePosition, StereoPass), StereoPass);
 	}
-	
+
 	double end = FPlatformTime::Seconds();
 
 
 	if (s_ShowDebugMessages)
 		GEngine->AddOnScreenDebugMessage(0, 1, FColor::Red, FString::Printf(TEXT("TimeToOffAxis in: %f s."), end - start));
-	
+
 
 	return tmp;
 }
@@ -80,13 +80,17 @@ void UOffAxisLocalPlayer::UpdateProjectionMatrix_Internal(FSceneView* View, FMat
 
 	View->UpdateProjectionMatrix(View->ViewMatrices.GetViewMatrix().Inverse() * axisChanger * stereoProjectionMatrix);
 
+	s_InvProjectionMatrix = View->ViewMatrices.GetInvProjectionMatrix();
+	s_ConstrainedViewRect = View->UnconstrainedViewRect;
+	s_ProjectionMatrix = View->ViewMatrices.GetProjectionMatrix();
+
 	View->UpdateViewMatrix();
 }
 
 void UOffAxisLocalPlayer::InitOffAxisProjection_Fast(float _screenWidth, float _screenHeight)
 {
-	TopLeftCorner_ = FVector(-_screenWidth / 2.f, -_screenHeight / 2.f, GNearClippingPlane);
-	BottomRightCorner_ = FVector(_screenWidth / 2.f, _screenHeight / 2.f, GNearClippingPlane);
+	s_TopLeftCorner = FVector(-_screenWidth / 2.f, -_screenHeight / 2.f, GNearClippingPlane);
+	s_BottomRightCorner = FVector(_screenWidth / 2.f, _screenHeight / 2.f, GNearClippingPlane);
 
 
 	FMatrix Frustum;
@@ -190,10 +194,10 @@ FMatrix UOffAxisLocalPlayer::GenerateOffAxisMatrix_Internal_Slow(float _screenWi
 
 FMatrix UOffAxisLocalPlayer::GenerateOffAxisMatrix_Internal_Fast(FVector _eyeRelativePositon)
 {
-	FVector eyeToTopLeft = TopLeftCorner_ - _eyeRelativePositon;
+	FVector eyeToTopLeft = s_TopLeftCorner - _eyeRelativePositon;
 	FVector eyeToTopLeftNear = GNearClippingPlane / eyeToTopLeft.Z * eyeToTopLeft;
 
-	FVector eyeToBottomRight = BottomRightCorner_ - _eyeRelativePositon;
+	FVector eyeToBottomRight = s_BottomRightCorner - _eyeRelativePositon;
 	FVector eyeToBottomRightNear = eyeToBottomRight / eyeToBottomRight.Z * GNearClippingPlane;
 
 	//Frustum: l, r, b, t, near, far
@@ -230,7 +234,6 @@ FMatrix UOffAxisLocalPlayer::GenerateOffAxisMatrix_Internal_Test(float _screenWi
 
 	//pa = lower left, pb = lower right, pc = upper left, eye pos
 
-	FVector pa, pb, pc, pe;
 	/*
 	 *pa=(-180,	-110,	0.1)
 	 *pb=(180,	-110,	0.1)
@@ -278,13 +281,6 @@ FMatrix UOffAxisLocalPlayer::GenerateOffAxisMatrix_Internal_Test(float _screenWi
 		pa = FVector(-width / 2.0f, -height / 2.0f, n);
 		pb = FVector(width / 2.0f, -height / 2.0f, n);
 		pc = FVector(-width / 2.0f, height / 2.0f, n);
-		pe = FVector(eyePosition.X, eyePosition.Y, eyePosition.Z);
-		break;
-	case 6: 
-		GEngine->AddOnScreenDebugMessage(150, 2, FColor::Red, FString::Printf(TEXT("Using I = 2")));
-		pa = FVector(-width / 2.0f, -height / 2.0f , n - s_tmp.Z);
-		pb = FVector(width / 2.0f, -height / 2.0f, n - s_tmp.Z);
-		pc = FVector(-width / 2.0f, height / 2.0f , n);
 		pe = FVector(eyePosition.X, eyePosition.Y, eyePosition.Z);
 		break;
 	default: //nothing
@@ -418,7 +414,7 @@ float UOffAxisLocalPlayer::SetHeight(float _height)
 EOffAxisMethod UOffAxisLocalPlayer::ToggleOffAxisMethod()
 {
 
-	switch (s_OffAxisMethod) 
+	switch (s_OffAxisMethod)
 	{
 	case EOffAxisMethod::Fast:
 		s_OffAxisMethod = EOffAxisMethod::Slow;
@@ -435,7 +431,7 @@ EOffAxisMethod UOffAxisLocalPlayer::ToggleOffAxisMethod()
 	};
 
 	PrintCurrentOffAxisVersion();
-	
+
 	return s_OffAxisMethod;
 }
 
@@ -515,3 +511,30 @@ int UOffAxisLocalPlayer::SetI(int _newVal)
 	GEngine->AddOnScreenDebugMessage(155, 2, FColor::Red, FString::Printf(TEXT("New I: %i"), i));
 	return i;
 }
+
+bool UOffAxisLocalPlayer::OffAxisDeprojectScreenToWorld(APlayerController const* Player, const FVector2D& ScreenPosition, FVector& WorldPosition, FVector& WorldDirection)
+{
+	ULocalPlayer* const LP = Player ? Player->GetLocalPlayer() : nullptr;
+	
+	if (LP && LP->ViewportClient)
+	{
+		// get the projection data
+		FSceneViewProjectionData ProjectionData;
+		
+		if (LP->GetProjectionData(LP->ViewportClient->Viewport, eSSP_FULL, /*out*/ ProjectionData))
+		{
+			ProjectionData.ProjectionMatrix = s_ProjectionMatrix;
+			s_ProjectionMatrix = FTranslationMatrix(-ProjectionData.ViewOrigin) * ProjectionData.ViewRotationMatrix * s_ProjectionMatrix;
+			FMatrix const InvViewProjMatrix = s_ProjectionMatrix.InverseFast();
+
+			FSceneView::DeprojectScreenToWorld(ScreenPosition, ProjectionData.GetConstrainedViewRect(), InvViewProjMatrix, /*out*/ WorldPosition, /*out*/ WorldDirection);
+			return true;
+		}
+	}
+
+	// something went wrong, zero things and return false
+	WorldPosition = FVector::ZeroVector;
+	WorldDirection = FVector::ZeroVector;
+	return false;
+}
+

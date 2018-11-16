@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "EOffAxisMethod.h"
+#include "Runtime/Core/Public/Math/IntRect.h"
 #include "Engine/LocalPlayer.h"
 #include "OffAxisLocalPlayer.generated.h"
 
@@ -38,6 +39,9 @@ public:
 
 
 	FMatrix FrustumMatrix(float left, float right, float bottom, float top, float nearVal, float farVal);
+
+
+
 
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "PrintCurrentOffAxisVersion", Keywords = "OffAxisProjection print"), Category = "OffAxisProjection")
 		static FText GetOffAxisEnumValueAsString(EOffAxisMethod _val);
@@ -90,6 +94,9 @@ public:
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "SetI", Keywords = "OffAxisProjection SetI"), Category = "OffAxisProjection")
 		static int SetI(int _newVal);
 
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "OffAxisDeproject", Keywords = " OffAxis Deproject"), Category = "OffAxisProjection")
+		static bool OffAxisDeprojectScreenToWorld(APlayerController const* Player, const FVector2D& ScreenPosition, FVector& WorldPosition, FVector& WorldDirection);
+
 
 private: 
 	FMatrix mOffAxisMatrix = FMatrix();
@@ -114,12 +121,19 @@ static EOffAxisMethod s_OffAxisMethod = EOffAxisMethod::Fast;
 static float s_Width = 0.f;
 static float s_Height = 0.f;
 
-static FVector TopLeftCorner_ = FVector();
-static FVector BottomRightCorner_ = FVector();
+static FVector s_TopLeftCorner = FVector();
+static FVector s_BottomRightCorner = FVector();
 
 static float GFarClippingPlane = 10000.f;
 
-static FMatrix Frustum;
+static FMatrix s_Frustum;
 
 //////////////////////////////////////////////////////////////////////////
 static int i = 0;
+
+static FVector pa, pb, pc, pe;
+
+static FMatrix s_InvProjectionMatrix = FMatrix();
+static FMatrix s_ProjectionMatrix = FMatrix();
+
+static FIntRect s_ConstrainedViewRect = FIntRect(); 
