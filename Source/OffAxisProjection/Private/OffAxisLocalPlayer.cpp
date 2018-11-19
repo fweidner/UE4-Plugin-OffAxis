@@ -538,17 +538,25 @@ bool UOffAxisLocalPlayer::OffAxisDeprojectScreenToWorld(APlayerController const*
 	return false;
 }
 
-
-bool UOffAxisLocalPlayer::OffAxisLineTraceByChannel(UObject* WorldContextObject, /*out*/ struct FHitResult& OutHit, FVector _eyeRelativePosition, FVector _end)
+bool UOffAxisLocalPlayer::OffAxisDeprojectScreenToWorld(APlayerController const* Player, FVector& WorldPosition, FVector& WorldDirection)
 {
+	float x, y;
+	Player->GetMousePosition(x, y);
+	return OffAxisDeprojectScreenToWorld(Player, FVector2D(x,y), WorldPosition, WorldDirection);
+}
 
 
-	
+bool UOffAxisLocalPlayer::OffAxisLineTraceByChannel(UObject* WorldContextObject, /*out*/ struct FHitResult& OutHit, FVector _eyeRelativePosition)
+{
+	//transform eyeRelativePosition to UE4 coordinates
 	FVector _eyeRelativePositioninUE4Coord = FVector(_eyeRelativePosition.Z, _eyeRelativePosition.X, _eyeRelativePosition.Y);
 
+	//get end position for ray trace
+	FVector WorldPosition, WorldDirection;
+	OffAxisDeprojectScreenToWorld(UGameplayStatics::GetPlayerController(WorldContextObject, 0), WorldPosition, WorldDirection);
+	FVector end = WorldPosition + 1000 * WorldDirection;
 
-	UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull);
-
-	return World->LineTraceSingleByChannel(OutHit, _eyeRelativePositioninUE4Coord, _end, ECollisionChannel::ECC_Visibility);
+	//do raytrace
+	return WorldContextObject->GetWorld()->LineTraceSingleByChannel(OutHit, _eyeRelativePositioninUE4Coord, end, ECollisionChannel::ECC_Visibility);
 
 }

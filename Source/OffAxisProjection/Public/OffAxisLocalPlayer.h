@@ -97,8 +97,11 @@ public:
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "OffAxisDeproject", Keywords = " OffAxis Deproject"), Category = "OffAxisProjection")
 		static bool OffAxisDeprojectScreenToWorld(APlayerController const* Player, const FVector2D& ScreenPosition, FVector& WorldPosition, FVector& WorldDirection);
 
-	UFUNCTION(BlueprintCallable, meta = (DisplayName = "OffAxisLineTraceByChannel", Keywords = " OffAxis LineTraceByChannel"), Category = "OffAxisProjection")
-		static bool OffAxisLineTraceByChannel(UObject* WorldContextObject, /*out*/ struct FHitResult& OutHit, FVector _start, FVector _end);
+	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject", DisplayName = "OffAxisLineTraceByChannel", Keywords = " OffAxis LineTraceByChannel"), Category = "OffAxisProjection")
+		static bool OffAxisLineTraceByChannel(UObject* WorldContextObject, /*out*/ struct FHitResult& OutHit, FVector _start);
+
+	static bool OffAxisDeprojectScreenToWorld(APlayerController const* Player, FVector& WorldPosition, FVector& WorldDirection);
+
 private: 
 	FMatrix mOffAxisMatrix = FMatrix();
 	float f = 10000.f;
