@@ -2,6 +2,8 @@
 
 #include "OffAxisProjection.h"
 
+DEFINE_LOG_CATEGORY(OffAxisLog);
+
 #define LOCTEXT_NAMESPACE "FOffAxisProjectionModule"
 
 void FOffAxisProjectionModule::StartupModule()
