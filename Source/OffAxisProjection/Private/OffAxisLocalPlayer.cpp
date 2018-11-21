@@ -4,7 +4,7 @@
 
 #include "Engine.h"
 
-
+#include "OffAxisProjection.h" //used for log
 #include "Runtime/Core/Public/GenericPlatform/GenericPlatformTime.h" // for FPlatformTime
 #include "Runtime/Engine/Classes/Engine/GameViewportClient.h" //for ViewportClient
 
@@ -546,7 +546,17 @@ bool UOffAxisLocalPlayer::OffAxisDeprojectScreenToWorld(APlayerController const*
 }
 
 
-bool UOffAxisLocalPlayer::OffAxisLineTraceByChannel(UObject* WorldContextObject, /*out*/ struct FHitResult& OutHit, FVector _eyeRelativePosition)
+bool UOffAxisLocalPlayer::OffAxisLineTraceByChannel(
+			UObject* WorldContextObject, 
+			/*out*/ struct FHitResult& OutHit, 
+			FVector _eyeRelativePosition,
+			bool bDrawDebugLine,
+			FColor _color,
+			bool _bPersistentLines,
+			float _lifeTime,
+			uint8 _depthPriority,
+			float _thickness,
+			float _LengthOfRay)
 {
 	//transform eyeRelativePosition to UE4 coordinates
 	FVector _eyeRelativePositioninUE4Coord = FVector(_eyeRelativePosition.Z, _eyeRelativePosition.X, _eyeRelativePosition.Y);
@@ -554,8 +564,21 @@ bool UOffAxisLocalPlayer::OffAxisLineTraceByChannel(UObject* WorldContextObject,
 	//get end position for ray trace
 	FVector WorldPosition, WorldDirection;
 	OffAxisDeprojectScreenToWorld(UGameplayStatics::GetPlayerController(WorldContextObject, 0), WorldPosition, WorldDirection);
-	FVector end = WorldPosition + 1000 * WorldDirection;
+	FVector end = WorldPosition + _LengthOfRay * WorldDirection;
 
+	if (bDrawDebugLine)
+		DrawDebugLine(WorldContextObject->GetWorld(), _eyeRelativePositioninUE4Coord, end, _color, _bPersistentLines, _lifeTime, _depthPriority, _thickness);
+
+	if (s_ShowDebugMessages)
+	{
+
+		UE_LOG(OffAxisLog, Log, TEXT("Start: %s"), *_eyeRelativePosition.ToString());
+		UE_LOG(OffAxisLog, Log, TEXT("End  : %s"), *end.ToString());
+		
+		GEngine->AddOnScreenDebugMessage(300, 10, FColor::Cyan, FString::Printf(TEXT("Start: %s"), *_eyeRelativePosition.ToString()));
+		GEngine->AddOnScreenDebugMessage(310, 10, FColor::Cyan, FString::Printf(TEXT("End: %s"), *end.ToString()));
+	}
+	
 	//do raytrace
 	return WorldContextObject->GetWorld()->LineTraceSingleByChannel(OutHit, _eyeRelativePositioninUE4Coord, end, ECollisionChannel::ECC_Visibility);
 

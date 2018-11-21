@@ -94,11 +94,21 @@ public:
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "SetI", Keywords = "OffAxisProjection SetI"), Category = "OffAxisProjection")
 		static int SetI(int _newVal);
 
-	UFUNCTION(BlueprintCallable, meta = (DisplayName = "OffAxisDeproject", Keywords = " OffAxis Deproject"), Category = "OffAxisProjection")
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "OffAxisDeproject", Keywords = "OffAxis Deproject"), Category = "OffAxisProjection")
 		static bool OffAxisDeprojectScreenToWorld(APlayerController const* Player, const FVector2D& ScreenPosition, FVector& WorldPosition, FVector& WorldDirection);
 
-	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject", DisplayName = "OffAxisLineTraceByChannel", Keywords = " OffAxis LineTraceByChannel"), Category = "OffAxisProjection")
-		static bool OffAxisLineTraceByChannel(UObject* WorldContextObject, /*out*/ struct FHitResult& OutHit, FVector _start);
+	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject", DisplayName = "OffAxisLineTraceByChannel", AdvancedDisplay = "_color,_bPersistentLines,_lifeTime,_depthPriority,_thickness,_LengthOfRay", Keywords = " OffAxis LineTraceByChannel"), Category = "OffAxisProjection")
+		static bool OffAxisLineTraceByChannel(
+			UObject* WorldContextObject, 
+			/*out*/ struct FHitResult& OutHit, 
+			FVector _eyeRelativePosition, 
+			bool bDrawDebugLine, 
+			FColor _color, 
+			bool bPersistentLines = false, 
+			float _lifeTime = 10.f, 
+			uint8 _depthPriority = 0, 
+			float _thickness = 1.f, 
+			float _LengthOfRay = 1000.f);
 
 	static bool OffAxisDeprojectScreenToWorld(APlayerController const* Player, FVector& WorldPosition, FVector& WorldDirection);
 
