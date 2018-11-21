@@ -545,18 +545,17 @@ bool UOffAxisLocalPlayer::OffAxisDeprojectScreenToWorld(APlayerController const*
 	return OffAxisDeprojectScreenToWorld(Player, FVector2D(x,y), WorldPosition, WorldDirection);
 }
 
-
 bool UOffAxisLocalPlayer::OffAxisLineTraceByChannel(
 			UObject* WorldContextObject, 
 			/*out*/ struct FHitResult& OutHit, 
 			FVector _eyeRelativePosition,
 			bool bDrawDebugLine,
 			FColor _color,
-			bool _bPersistentLines,
-			float _lifeTime,
-			uint8 _depthPriority,
-			float _thickness,
-			float _LengthOfRay)
+			bool bPersistentLines /*= false*/,
+			float _lifeTime /*= 10.f*/,
+			uint8 _depthPriority /*= 0*/,
+			float _thickness /*= 1.f*/,
+			float _LengthOfRay /*= 1000.f*/)
 {
 	//transform eyeRelativePosition to UE4 coordinates
 	FVector _eyeRelativePositioninUE4Coord = FVector(_eyeRelativePosition.Z, _eyeRelativePosition.X, _eyeRelativePosition.Y);
@@ -567,7 +566,7 @@ bool UOffAxisLocalPlayer::OffAxisLineTraceByChannel(
 	FVector end = WorldPosition + _LengthOfRay * WorldDirection;
 
 	if (bDrawDebugLine)
-		DrawDebugLine(WorldContextObject->GetWorld(), _eyeRelativePositioninUE4Coord, end, _color, _bPersistentLines, _lifeTime, _depthPriority, _thickness);
+		DrawDebugLine(WorldContextObject->GetWorld(), _eyeRelativePositioninUE4Coord, end, _color, bPersistentLines, _lifeTime, _depthPriority, _thickness);
 
 	if (s_ShowDebugMessages)
 	{
