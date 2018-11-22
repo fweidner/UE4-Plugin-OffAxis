@@ -94,10 +94,10 @@ public:
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "SetI", Keywords = "OffAxisProjection SetI"), Category = "OffAxisProjection")
 		static int SetI(int _newVal);
 
-	UFUNCTION(BlueprintCallable, meta = (DisplayName = "OffAxisDeproject", Keywords = "OffAxis Deproject"), Category = "OffAxisProjection")
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "OffAxisDeprojectScreenToWorld", Keywords = "OffAxis DeprojectScreenToWorld"), Category = "OffAxisProjection")
 		static bool OffAxisDeprojectScreenToWorld(APlayerController const* Player, const FVector2D& ScreenPosition, FVector& WorldPosition, FVector& WorldDirection);
 
-	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject", DisplayName = "OffAxisLineTraceByChannel", AdvancedDisplay = "_color,_bPersistentLines,_lifeTime,_depthPriority,_thickness,_LengthOfRay", Keywords = " OffAxis LineTraceByChannel"), Category = "OffAxisProjection")
+	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject", DisplayName = "OffAxisLineTraceByChannel", AdvancedDisplay = "_color,bPersistentLines,_lifeTime,_depthPriority,_thickness,_LengthOfRay", Keywords = " OffAxis LineTraceByChannel"), Category = "OffAxisProjection")
 		static bool OffAxisLineTraceByChannel(
 			UObject* WorldContextObject, 
 			/*out*/ struct FHitResult& OutHit, 

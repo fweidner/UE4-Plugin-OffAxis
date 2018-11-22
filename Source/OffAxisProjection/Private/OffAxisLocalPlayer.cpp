@@ -566,10 +566,8 @@ bool UOffAxisLocalPlayer::OffAxisLineTraceByChannel(
 	FVector end = WorldPosition + _LengthOfRay * WorldDirection;
 
 	if (bDrawDebugLine)
-		DrawDebugLine(WorldContextObject->GetWorld(), _eyeRelativePositioninUE4Coord, end, _color, bPersistentLines, _lifeTime, _depthPriority, _thickness);
-
-	if (s_ShowDebugMessages)
 	{
+		DrawDebugLine(WorldContextObject->GetWorld(), _eyeRelativePositioninUE4Coord, end, _color, bPersistentLines, _lifeTime, _depthPriority, _thickness);
 
 		UE_LOG(OffAxisLog, Log, TEXT("Start: %s"), *_eyeRelativePosition.ToString());
 		UE_LOG(OffAxisLog, Log, TEXT("End  : %s"), *end.ToString());
