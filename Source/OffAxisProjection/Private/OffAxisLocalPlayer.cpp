@@ -35,11 +35,11 @@ FMatrix UOffAxisLocalPlayer::FrustumMatrix(float left, float right, float bottom
 	Result.SetIdentity();
 	Result.M[0][0] = (2.0f * nearVal) / (right - left);
 	Result.M[1][1] = (2.0f * nearVal) / (top - bottom);
-	Result.M[2][0] = (right + left) / (right - left);
-	Result.M[2][1] = (top + bottom) / (top - bottom);
-	Result.M[2][2] = -(farVal + nearVal) / (farVal - nearVal);
-	Result.M[2][3] = -1.0f;
-	Result.M[3][2] = -(2.0f * farVal * nearVal) / (farVal - nearVal);
+	Result.M[2][0] = -(right + left) / (right - left);
+	Result.M[2][1] = -(top + bottom) / (top - bottom);
+	Result.M[2][2] = (farVal) / (farVal - nearVal);
+	Result.M[2][3] = 1.0f;
+	Result.M[3][2] = -(farVal * nearVal) / (farVal - nearVal);
 	Result.M[3][3] = 0.0f;
 
 	return Result;
@@ -65,7 +65,7 @@ void UOffAxisLocalPlayer::UpdateProjectionMatrix_Internal(FSceneView* View, FMat
 		break;
 	}
 
-	//stereoProjectionMatrix = FRotationMatrix(FRotator(s_tmp.X, s_tmp.Y, s_tmp.Z)) * OffAxisMatrix;
+	//stereoProjectionMatrix = FRotationMatrix(FRotator(0.f, 0.f, s_tmp.X)) * OffAxisMatrix;
 
 	FMatrix axisChanger; //rotates everything to UE4 coordinate system.
 	axisChanger.SetIdentity();
@@ -76,15 +76,20 @@ void UOffAxisLocalPlayer::UpdateProjectionMatrix_Internal(FSceneView* View, FMat
 	axisChanger.M[1][0] = 1.0f;
 	axisChanger.M[2][1] = 1.0f;
 
+
+	View->ViewRotation = s_tmpRot;
+
+	View->UpdateViewMatrix();
+	
 	View->ProjectionMatrixUnadjustedForRHI = View->ViewMatrices.GetViewMatrix().Inverse() * axisChanger * stereoProjectionMatrix;
 
 	View->UpdateProjectionMatrix(View->ViewMatrices.GetViewMatrix().Inverse() * axisChanger * stereoProjectionMatrix);
 
-	s_InvProjectionMatrix = View->ViewMatrices.GetInvProjectionMatrix();
-	s_ConstrainedViewRect = View->UnconstrainedViewRect;
+
 	s_ProjectionMatrix = View->ViewMatrices.GetProjectionMatrix();
 
-	View->UpdateViewMatrix();
+	
+	
 }
 
 void UOffAxisLocalPlayer::InitOffAxisProjection_Fast(float _screenWidth, float _screenHeight)
@@ -217,6 +222,11 @@ FMatrix UOffAxisLocalPlayer::GenerateOffAxisMatrix_Internal_Fast(FVector _eyeRel
 
 FMatrix UOffAxisLocalPlayer::GenerateOffAxisMatrix_Internal_Test(float _screenWidth, float _screenHeight, FVector _eyeRelativePositon)
 {
+	GEngine->AddOnScreenDebugMessage(45, 2, FColor::Emerald, FString::Printf(TEXT("pe: %s"), *pe.ToString()));
+
+
+	_eyeRelativePositon = s_tmpRot.RotateVector(_eyeRelativePositon);
+
 	FMatrix result;
 
 	float width = _screenWidth;
@@ -240,51 +250,64 @@ FMatrix UOffAxisLocalPlayer::GenerateOffAxisMatrix_Internal_Test(float _screenWi
 	 *pc=(-180,	89,		0.1)
 	 */
 
-	switch (i)
+	FVector2D ProjectionScreenSize = FVector2D(2*58.f, 2*34.f);
+
+	float hw = ProjectionScreenSize.X / 2.f * 100; //from pScreen
+	float hh = ProjectionScreenSize.Y / 2.f * 100; //from pScreen
+
+	FVector ProjectionScreenLoc = FVector(0.f, 0.f, 0.f);
+	FRotator ProjectionScreenRot = FRotator(0.f, 0.f, 0.f);
+
+	switch (s_test1)
 	{
-	case 0: // everything
-		GEngine->AddOnScreenDebugMessage(150, 2, FColor::Red, FString::Printf(TEXT("Using I = 0")));
-		pa = FVector(-width / 2.0f + s_tmp.X, -height / 2.0f + s_tmp.Y, n + s_tmp.Z);
-		pb = FVector(width / 2.0f + s_tmp.X, -height / 2.0f + s_tmp.Y, n + s_tmp.Z);
-		pc = FVector(-width / 2.0f + s_tmp.X, height / 2.0f + s_tmp.Y, n + s_tmp.Z);
-		pe = FVector(eyePosition.X + s_tmp.X, eyePosition.Y + s_tmp.Y, eyePosition.Z + s_tmp.Z);
+	case 0: 
+		GEngine->AddOnScreenDebugMessage(45, 2, FColor::Emerald, FString::Printf(TEXT("Method: s_tmpVec @ everything eye")));
+		pa = FVector(-width / 2.0f + s_tmpVec.X, -height / 2.0f + s_tmpVec.Y, n + s_tmpVec.Z);
+		pb = FVector(width / 2.0f + s_tmpVec.X, -height / 2.0f + s_tmpVec.Y, n + s_tmpVec.Z);
+		pc = FVector(-width / 2.0f + s_tmpVec.X, height / 2.0f + s_tmpVec.Y, n + s_tmpVec.Z);
+		pe = FVector(eyePosition.X + s_tmpVec.X, eyePosition.Y + s_tmpVec.Y, eyePosition.Z + s_tmpVec.Z);
 		break;
-	case 1: // everything
-		GEngine->AddOnScreenDebugMessage(150, 2, FColor::Red, FString::Printf(TEXT("Using I = 1")));
-		pa = FVector(-width / 2.0f + s_tmp.X, -height / 2.0f + s_tmp.Y, n + s_tmp.Z);
-		pb = FVector(width / 2.0f + s_tmp.X, -height / 2.0f + s_tmp.Y, n + s_tmp.Z);
-		pc = FVector(-width / 2.0f + s_tmp.X, height / 2.0f + s_tmp.Y, n + s_tmp.Z);
+	case 1: // s_tmpVec @ pa, pb, pc
+		GEngine->AddOnScreenDebugMessage(45, 2, FColor::Emerald, FString::Printf(TEXT("Method: s_tmpVec @ pa, pb, pc")));
+		pa = FVector(-width / 2.0f + s_tmpVec.X, -height / 2.0f + s_tmpVec.Y, n + s_tmpVec.Z);
+		pb = FVector(width / 2.0f + s_tmpVec.X, -height / 2.0f + s_tmpVec.Y, n + s_tmpVec.Z);
+		pc = FVector(-width / 2.0f + s_tmpVec.X, height / 2.0f + s_tmpVec.Y, n + s_tmpVec.Z);
 		pe = FVector(eyePosition.X, eyePosition.Y, eyePosition.Z);
 		break;
-	case 2: //only pc
-		GEngine->AddOnScreenDebugMessage(150, 2, FColor::Red, FString::Printf(TEXT("Using I = 2")));
+	case 2: // s_tmpVec only @ pc
+		GEngine->AddOnScreenDebugMessage(45, 2, FColor::Emerald, FString::Printf(TEXT("Method: s_tmpVec only @ pc")));
 		pa = FVector(-width / 2.0f, -height / 2.0f, n);
 		pb = FVector(width / 2.0f, -height / 2.0f, n);
-		pc = FVector(-width / 2.0f + s_tmp.X, height / 2.0f + s_tmp.Y, n + s_tmp.Z);
+		pc = FVector(-width / 2.0f + s_tmpVec.X, height / 2.0f + s_tmpVec.Y, n + s_tmpVec.Z);
 		pe = FVector(eyePosition.X, eyePosition.Y, eyePosition.Z);
-	case 3: //only z tilt
-		GEngine->AddOnScreenDebugMessage(150, 2, FColor::Red, FString::Printf(TEXT("Using I = 2")));
-		pa = FVector(-width / 2.0f, -height / 2.0f, n - s_tmp.Z);
-		pb = FVector(width / 2.0f, -height / 2.0f, n - s_tmp.Z);
-		pc = FVector(-width / 2.0f, height / 2.0f, n + s_tmp.Z);
-		pe = FVector(eyePosition.X, eyePosition.Y, eyePosition.Z);
-		break;
-	case 4: //only tilt z + move x/y
-		GEngine->AddOnScreenDebugMessage(150, 2, FColor::Red, FString::Printf(TEXT("Using I = 2")));
-		pa = FVector(-width / 2.0f + s_tmp.X, -height / 2.0f + s_tmp.Y, n - s_tmp.Z);
-		pb = FVector(width / 2.0f + s_tmp.X, -height / 2.0f + s_tmp.Y, n - s_tmp.Z);
-		pc = FVector(-width / 2.0f + s_tmp.X, height / 2.0f + s_tmp.Y, n + s_tmp.Z);
+	case 3:
+		GEngine->AddOnScreenDebugMessage(45, 2, FColor::Emerald, FString::Printf(TEXT("Method: tilt z")));
+		pa = FVector(-width / 2.0f, -height / 2.0f, n - s_tmpVec.Z);
+		pb = FVector(width / 2.0f, -height / 2.0f, n - s_tmpVec.Z);
+		pc = FVector(-width / 2.0f, height / 2.0f, n + s_tmpVec.Z);
 		pe = FVector(eyePosition.X, eyePosition.Y, eyePosition.Z);
 		break;
-	case 5: //nothing
-		GEngine->AddOnScreenDebugMessage(150, 2, FColor::Red, FString::Printf(TEXT("Using I = ?")));
+	case 4: 
+		GEngine->AddOnScreenDebugMessage(45, 2, FColor::Emerald, FString::Printf(TEXT("Method: tilt z + move x/y")));
+		pa = FVector(-width / 2.0f + s_tmpVec.X, -height / 2.0f + s_tmpVec.Y, n - s_tmpVec.Z);
+		pb = FVector(width / 2.0f + s_tmpVec.X, -height / 2.0f + s_tmpVec.Y, n - s_tmpVec.Z);
+		pc = FVector(-width / 2.0f + s_tmpVec.X, height / 2.0f + s_tmpVec.Y, n + s_tmpVec.Z);
+		pe = FVector(eyePosition.X, eyePosition.Y, eyePosition.Z);
+		break;
+	case 5: 
+		GEngine->AddOnScreenDebugMessage(45, 2, FColor::Emerald, FString::Printf(TEXT("Method: nothing; default calculation")));
 		pa = FVector(-width / 2.0f, -height / 2.0f, n);
 		pb = FVector(width / 2.0f, -height / 2.0f, n);
 		pc = FVector(-width / 2.0f, height / 2.0f, n);
 		pe = FVector(eyePosition.X, eyePosition.Y, eyePosition.Z);
 		break;
+	case 6: 
+		GEngine->AddOnScreenDebugMessage(45, 2, FColor::Emerald, FString::Printf(TEXT("Method: nothing; cubes as values")));
+		pe = FVector(eyePosition.X, eyePosition.Y, eyePosition.Z);
+		break;
 	default: //nothing
-		GEngine->AddOnScreenDebugMessage(150, 2, FColor::Red, FString::Printf(TEXT("Using I = ?")));
+		GEngine->AddOnScreenDebugMessage(45, 2, FColor::Emerald, FString::Printf(TEXT("Method: nothing")));
+		
 		pa = FVector(-width / 2.0f, -height / 2.0f, n);
 		pb = FVector(width / 2.0f, -height / 2.0f, n);
 		pc = FVector(-width / 2.0f, height / 2.0f, n);
@@ -300,11 +323,11 @@ FMatrix UOffAxisLocalPlayer::GenerateOffAxisMatrix_Internal_Test(float _screenWi
 	// Compute an orthonormal basis for the screen.
 	FVector vr, vu, vn;
 	vr = pb - pa;
-	vr /= vr.Normalize();
+	vr.Normalize();
 	vu = pc - pa;
-	vu /= vu.Normalize();
-	vn = FVector::CrossProduct(vr, vu);
-	vn /= vn.Normalize();
+	vu.Normalize();
+	vn = -FVector::CrossProduct(vr, vu);
+	vn.Normalize();
 
 	// Find the distance from the eye to screen plane.
 	float d = -FVector::DotProduct(va, vn);
@@ -329,7 +352,6 @@ FMatrix UOffAxisLocalPlayer::GenerateOffAxisMatrix_Internal_Test(float _screenWi
 	M.M[1][0] = vu.X; M.M[1][1] = vu.Y; M.M[1][2] = vu.Z;
 	M.M[2][0] = vn.X; M.M[2][1] = vn.Y; M.M[2][2] = vn.Z;
 	M.M[3][3] = 1.0f;
-	//result = result * M;
 
 	if (s_ShowDebugMessages)
 	{
@@ -337,7 +359,8 @@ FMatrix UOffAxisLocalPlayer::GenerateOffAxisMatrix_Internal_Test(float _screenWi
 		GEngine->AddOnScreenDebugMessage(20, 2, FColor::Orange, FString::Printf(TEXT("pb: %s"), *pb.ToString()));
 		GEngine->AddOnScreenDebugMessage(31, 2, FColor::Orange, FString::Printf(TEXT("pc: %s"), *pc.ToString()));
 		GEngine->AddOnScreenDebugMessage(40, 2, FColor::Orange, FString::Printf(TEXT("pe: %s"), *pe.ToString()));
-		GEngine->AddOnScreenDebugMessage(50, 2, FColor::Black, FString::Printf(TEXT("vr: %s"), *vu.ToString()));
+		GEngine->AddOnScreenDebugMessage(50, 2, FColor::Black
+			, FString::Printf(TEXT("vr: %s"), *vu.ToString()));
 		GEngine->AddOnScreenDebugMessage(60, 2, FColor::Black, FString::Printf(TEXT("vu: %s"), *vr.ToString()));
 		GEngine->AddOnScreenDebugMessage(70, 2, FColor::Black, FString::Printf(TEXT("vn: %s"), *vn.ToString()));
 		GEngine->AddOnScreenDebugMessage(80, 4, FColor::Red, FString::Printf(TEXT("Frustum: %f \t %f \t %f \t %f \t %f \t %f \t "), l, r, b, t, n, f));
@@ -345,9 +368,9 @@ FMatrix UOffAxisLocalPlayer::GenerateOffAxisMatrix_Internal_Test(float _screenWi
 		GEngine->AddOnScreenDebugMessage(100, 4, FColor::Red, FString::Printf(TEXT("nd: %f"), nd));
 	}
 
-	// Move the apex of the frustum to the origin.
-	result = FTranslationMatrix(-eyePosition) * result;
-
+	//Move the apex of the frustum to the origin.
+	result = FTranslationMatrix(-eyePosition) *  result * M;
+	
 	//scales matrix for UE4 and RHI
 	result *= 1.0f / result.M[0][0];
 
@@ -437,8 +460,14 @@ EOffAxisMethod UOffAxisLocalPlayer::ToggleOffAxisMethod()
 
 FVector UOffAxisLocalPlayer::UpdateTmpVector(FVector _newVal)
 {
-	s_tmp = _newVal;
-	return s_tmp;
+	s_tmpVec = _newVal;
+	return s_tmpVec;
+}
+
+FRotator UOffAxisLocalPlayer::UpdateTmpRotator(FRotator _newVal)
+{
+	s_tmpRot = _newVal;
+	return s_tmpRot;
 }
 
 bool UOffAxisLocalPlayer::UpdateShowDebugMessages(bool _newVal)
@@ -505,12 +534,37 @@ FText UOffAxisLocalPlayer::GetOffAxisEnumValueAsString(EOffAxisMethod _val)
 	return EnumPtr->GetDisplayNameTextByIndex(_val);
 }
 
-int UOffAxisLocalPlayer::SetI(int _newVal)
+int UOffAxisLocalPlayer::SetTest1(int _newVal)
 {
-	i = _newVal;
-	GEngine->AddOnScreenDebugMessage(155, 2, FColor::Red, FString::Printf(TEXT("New I: %i"), i));
-	return i;
+	s_test1 = _newVal;
+	//GEngine->AddOnScreenDebugMessage(155, 2, FColor::Red, FString::Printf(TEXT("New : %i"), s_test1));
+	return s_test1;
 }
+
+void UOffAxisLocalPlayer::SetPx(bool _setpa, FVector _pa, bool _setpb, FVector _pb, bool _setpc, FVector _pc)
+{
+	GEngine->AddOnScreenDebugMessage(10, 2, FColor::Blue, FString::Printf(TEXT("_pa: %s"), *_pa.ToString()));
+
+	if (_setpa)
+	{
+		pa = _pa;
+	}
+	if (_setpb)
+	{
+		pb = _pb;
+	}
+	if (_setpc)
+	{
+		pc = _pc;
+	}
+
+	GEngine->AddOnScreenDebugMessage(100, 2, FColor::Blue, FString::Printf(TEXT("pa: %s"), *pa.ToString()));
+
+}
+
+/************************************************************************/
+/* PICKING                                                              */
+/************************************************************************/
 
 bool UOffAxisLocalPlayer::OffAxisDeprojectScreenToWorld(APlayerController const* Player, const FVector2D& ScreenPosition, FVector& WorldPosition, FVector& WorldDirection)
 {
@@ -580,3 +634,4 @@ bool UOffAxisLocalPlayer::OffAxisLineTraceByChannel(
 	return WorldContextObject->GetWorld()->LineTraceSingleByChannel(OutHit, _eyeRelativePositioninUE4Coord, end, ECollisionChannel::ECC_Visibility);
 
 }
+

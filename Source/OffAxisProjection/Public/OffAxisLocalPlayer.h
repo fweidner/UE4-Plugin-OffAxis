@@ -70,6 +70,10 @@ public:
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UpdateTmpVector", Keywords = "OffAxisProjection tmp update"), Category = "OffAxisProjection")
 		static FVector UpdateTmpVector(FVector _newVal);
 
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UpdateTmpRotator", Keywords = "OffAxisProjection tmp update"), Category = "OffAxisProjection")
+		static FRotator UpdateTmpRotator(FRotator _newVal);
+
+
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UpdateShowDebugMessages", Keywords = "OffAxisProjection show debug "), Category = "OffAxisProjection")
 		static bool UpdateShowDebugMessages(bool _newVal);
 
@@ -91,8 +95,8 @@ public:
 
 	//////////////////////////////////////////////////////////////////////////
 
-	UFUNCTION(BlueprintCallable, meta = (DisplayName = "SetI", Keywords = "OffAxisProjection SetI"), Category = "OffAxisProjection")
-		static int SetI(int _newVal);
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "SetTest1", Keywords = "OffAxisProjection SetTest1"), Category = "OffAxisProjection")
+		static int SetTest1(int _newVal);
 
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "OffAxisDeprojectScreenToWorld", Keywords = "OffAxis DeprojectScreenToWorld"), Category = "OffAxisProjection")
 		static bool OffAxisDeprojectScreenToWorld(APlayerController const* Player, const FVector2D& ScreenPosition, FVector& WorldPosition, FVector& WorldDirection);
@@ -112,10 +116,14 @@ public:
 
 	static bool OffAxisDeprojectScreenToWorld(APlayerController const* Player, FVector& WorldPosition, FVector& WorldDirection);
 
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "OffAxisSetPx", Keywords = "OffAxis SetPx"), Category = "OffAxisProjection")
+		static void SetPx(bool _setpa, FVector _pa , bool _setpb, FVector _pb, bool _setpc, FVector _pc);
+
 private: 
 	FMatrix mOffAxisMatrix = FMatrix();
-	float f = 10000.f;
-	float n = .1f;
+	float OffAxisFarPlane = 10000.f;
+	float OffAxisNearPlane = .1f;
+	
 };
 
 //////////////////////////////////////////////////////////////////////////
@@ -124,7 +132,9 @@ static float s_EyeOffsetVal = 3.2f;
 
 //////////////////////////////////////////////////////////////////////////
 static bool s_ShowDebugMessages = false;
-static FVector s_tmp = FVector();
+
+static FVector s_tmpVec = FVector();
+static FRotator s_tmpRot = FRotator();
 
 //////////////////////////////////////////////////////////////////////////
 static FVector s_EyePosition = FVector();
@@ -143,11 +153,16 @@ static float GFarClippingPlane = 10000.f;
 static FMatrix s_Frustum;
 
 //////////////////////////////////////////////////////////////////////////
-static int i = 0;
+static int s_test1 = 0;
+static int s_test2 = 0;
 
-static FVector pa, pb, pc, pe;
 
-static FMatrix s_InvProjectionMatrix = FMatrix();
+//////////////////////////////////////////////////////////////////////////
+static FVector pa = FVector(-1.f, -1.f, 0.f);
+static FVector pb = FVector(1.f, -1.f, 0.f);
+static FVector pc = FVector(1.f, 1.f, 0.f);
+static FVector pe = FVector(0.f, 0.f, 0.f);
+
 static FMatrix s_ProjectionMatrix = FMatrix();
 
-static FIntRect s_ConstrainedViewRect = FIntRect(); 
+//////////////////////////////////////////////////////////////////////////
