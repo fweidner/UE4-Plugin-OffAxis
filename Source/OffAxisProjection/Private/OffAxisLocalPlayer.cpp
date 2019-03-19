@@ -33,6 +33,7 @@ FSceneView * UOffAxisLocalPlayer::CalcSceneView(FSceneViewFamily * ViewFamily, F
 
 FMatrix UOffAxisLocalPlayer::FrustumMatrix(float left, float right, float bottom, float top, float nearVal, float farVal)
 {
+	//column-major order
 	FMatrix Result;
 	Result.SetIdentity();
 	Result.M[0][0] = (2.0f * nearVal) / (right - left);
@@ -290,7 +291,7 @@ FMatrix UOffAxisLocalPlayer::GenerateOffAxisMatrix_Internal_Test(float _screenWi
 		pe = FVector(eyePosition.X, eyePosition.Y, eyePosition.Z);
 		break;
 	case 4: 
-		GEngine->AddOnScreenDebugMessage(45, 2, FColor::Emerald, FString::Printf(TEXT("Method: tilt z + move x/y")));
+		GEngine->AddOnScreenDebugMessage(200, 2, FColor::Emerald, FString::Printf(TEXT("Method: tilt z + move x/y")));
 		pa = FVector(-width / 2.0f + s_tmpVec.X, -height / 2.0f + s_tmpVec.Y, n - s_tmpVec.Z);
 		pb = FVector(width / 2.0f + s_tmpVec.X, -height / 2.0f + s_tmpVec.Y, n - s_tmpVec.Z);
 		pc = FVector(-width / 2.0f + s_tmpVec.X, height / 2.0f + s_tmpVec.Y, n + s_tmpVec.Z);
