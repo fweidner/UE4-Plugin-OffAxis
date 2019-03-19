@@ -348,12 +348,12 @@ FMatrix UOffAxisLocalPlayer::GenerateOffAxisMatrix_Internal_Test(float _screenWi
 
 	// Rotate the projection to be non-perpendicular. 
 	// This is currently unused until the screen is used.
-	FMatrix M;
-	M.SetIdentity();
-	M.M[0][0] = vr.X; M.M[0][1] = vr.Y; M.M[0][2] = vr.Z;
-	M.M[1][0] = vu.X; M.M[1][1] = vu.Y; M.M[1][2] = vu.Z;
-	M.M[2][0] = vn.X; M.M[2][1] = vn.Y; M.M[2][2] = vn.Z;
-	M.M[3][3] = 1.0f;
+// 	FMatrix M;
+// 	M.SetIdentity();
+// 	M.M[0][0] = vr.X; M.M[0][1] = vr.Y; M.M[0][2] = vr.Z;
+// 	M.M[1][0] = vu.X; M.M[1][1] = vu.Y; M.M[1][2] = vu.Z;
+// 	M.M[2][0] = vn.X; M.M[2][1] = vn.Y; M.M[2][2] = vn.Z;
+// 	M.M[3][3] = 1.0f;
 
 	if (s_ShowDebugMessages)
 	{
