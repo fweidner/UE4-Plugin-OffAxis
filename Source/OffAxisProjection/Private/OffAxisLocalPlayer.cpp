@@ -14,8 +14,8 @@ FSceneView * UOffAxisLocalPlayer::CalcSceneView(FSceneViewFamily * ViewFamily, F
 
 	FSceneView* tmp = ULocalPlayer::CalcSceneView(ViewFamily, OutViewLocation, OutViewRotation, Viewport, ViewDrawer, StereoPass);
 
-	//OutViewRotation = s_tmpRot;
 
+	OutViewRotation = s_tmpRot;
 	if (s_bUseoffAxis && tmp)
 	{
 		UpdateProjectionMatrix_Internal(tmp, GenerateOffAxisMatrix(s_Width, s_Height, s_EyePosition, StereoPass), StereoPass);
@@ -68,8 +68,6 @@ void UOffAxisLocalPlayer::UpdateProjectionMatrix_Internal(FSceneView* View, FMat
 		break;
 	}
 
-	//stereoProjectionMatrix = FRotationMatrix(FRotator(0.f, 0.f, s_tmp.X)) * OffAxisMatrix;
-
 	FMatrix axisChanger; //rotates everything to UE4 coordinate system.
 	axisChanger.SetIdentity();
 	axisChanger.M[0][0] = 0.0f;
@@ -80,7 +78,7 @@ void UOffAxisLocalPlayer::UpdateProjectionMatrix_Internal(FSceneView* View, FMat
 	axisChanger.M[2][1] = 1.0f;
 
 
-	//View->ViewRotation = s_tmpRot;
+	View->ViewRotation = s_tmpRot;
 
 	View->UpdateViewMatrix();
 
