@@ -88,11 +88,7 @@ void UOffAxisLocalPlayer::UpdateProjectionMatrix_Internal(FSceneView* View, FMat
 
 	View->UpdateProjectionMatrix(View->ViewMatrices.GetViewMatrix().Inverse() * tmpMat);
 
-
 	s_ProjectionMatrix = View->ViewMatrices.GetProjectionMatrix();
-
-	
-	
 }
 
 void UOffAxisLocalPlayer::InitOffAxisProjection_Fast(float _screenWidth, float _screenHeight)
@@ -241,7 +237,7 @@ FMatrix UOffAxisLocalPlayer::GenerateOffAxisMatrix_Internal_Test(float _screenWi
 
 	//this is analog to: http://csc.lsu.edu/~kooima/articles/genperspective/
 
-	//Careful: coordinate system! y-up, x-right
+	//Careful: coordinate system! y-up, x-right (UE4 uses inverted LHS)
 
 	//pa = lower left, pb = lower right, pc = upper left, eye pos
 
