@@ -79,6 +79,7 @@ void UOffAxisLocalPlayer::UpdateProjectionMatrix_Internal(FSceneView* View, FMat
 
 
 	View->ViewRotation = s_tmpRot;
+	GEngine->AddOnScreenDebugMessage(300, 1, FColor::Red, FString::Printf(TEXT("s_tmpRot: %s"), *s_tmpRot.ToString()));
 
 	View->UpdateViewMatrix();
 
@@ -221,9 +222,6 @@ FMatrix UOffAxisLocalPlayer::GenerateOffAxisMatrix_Internal_Fast(FVector _eyeRel
 
 FMatrix UOffAxisLocalPlayer::GenerateOffAxisMatrix_Internal_Test(float _screenWidth, float _screenHeight, FVector _eyeRelativePositon)
 {
-	//GEngine->AddOnScreenDebugMessage(45, 2, FColor::Emerald, FString::Printf(TEXT("pe (before): %s"), *pe.ToString()));
-	//_eyeRelativePositon = s_tmpRot.RotateVector(_eyeRelativePositon); //was just for debug puproses
-
 	FMatrix result;
 
 	float width = _screenWidth;
@@ -341,15 +339,6 @@ FMatrix UOffAxisLocalPlayer::GenerateOffAxisMatrix_Internal_Test(float _screenWi
 	result = FrustumMatrix(l, r, b, t, n, f);
 	//GEngine->AddOnScreenDebugMessage(40, 2, FColor::Red, FString::Printf(TEXT("FrustumMatrix_ORIG: %s"), *result.ToString()));
 
-	// Rotate the projection to be non-perpendicular. 
-	// This is currently unused until the screen is used.
-// 	FMatrix M;
-// 	M.SetIdentity();
-// 	M.M[0][0] = vr.X; M.M[0][1] = vr.Y; M.M[0][2] = vr.Z;
-// 	M.M[1][0] = vu.X; M.M[1][1] = vu.Y; M.M[1][2] = vu.Z;
-// 	M.M[2][0] = vn.X; M.M[2][1] = vn.Y; M.M[2][2] = vn.Z;
-// 	M.M[3][3] = 1.0f;
-
 	if (s_ShowDebugMessages)
 	{
 		GEngine->AddOnScreenDebugMessage(10, 2, FColor::Orange, FString::Printf(TEXT("pa: %s"), *pa.ToString()));
@@ -365,8 +354,6 @@ FMatrix UOffAxisLocalPlayer::GenerateOffAxisMatrix_Internal_Test(float _screenWi
 	}
 
 	//Move the apex of the frustum to the origin.
-	//result = FTranslationMatrix(-eyePosition) *  result;// * M.GetTransposed();#
-
 	result = FTranslationMatrix(-eyePosition) *  result;
 	
 	//scales matrix for UE4 and RHI
@@ -465,6 +452,12 @@ FVector UOffAxisLocalPlayer::UpdateTmpVector(FVector _newVal)
 FRotator UOffAxisLocalPlayer::UpdateTmpRotator(FRotator _newVal)
 {
 	s_tmpRot = _newVal;
+	return s_tmpRot;
+}
+
+FRotator UOffAxisLocalPlayer::AddTmpRotaterOffset(FRotator _offset)
+{
+	s_tmpRot += _offset;
 	return s_tmpRot;
 }
 

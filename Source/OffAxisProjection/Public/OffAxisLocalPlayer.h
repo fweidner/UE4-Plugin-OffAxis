@@ -73,7 +73,9 @@ public:
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UpdateTmpRotator", Keywords = "OffAxisProjection tmp update"), Category = "OffAxisProjection")
 		static FRotator UpdateTmpRotator(FRotator _newVal);
 
-
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "AddTmpRotaterOffset", Keywords = "OffAxisProjection tmp add offset"), Category = "OffAxisProjection")
+		static FRotator AddTmpRotaterOffset(FRotator _offset);
+	
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UpdateShowDebugMessages", Keywords = "OffAxisProjection show debug "), Category = "OffAxisProjection")
 		static bool UpdateShowDebugMessages(bool _newVal);
 
