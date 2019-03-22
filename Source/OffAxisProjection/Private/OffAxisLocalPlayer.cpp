@@ -570,7 +570,8 @@ bool UOffAxisLocalPlayer::OffAxisDeprojectScreenToWorld(APlayerController const*
 		{
 			ProjectionData.ProjectionMatrix = s_ProjectionMatrix;
 			s_ProjectionMatrix = FTranslationMatrix(-ProjectionData.ViewOrigin) * ProjectionData.ViewRotationMatrix * s_ProjectionMatrix;
-			FMatrix const InvViewProjMatrix = s_ProjectionMatrix.InverseFast();
+			
+			FMatrix const InvViewProjMatrix = s_ProjectionMatrix.Inverse();
 
 			FSceneView::DeprojectScreenToWorld(ScreenPosition, ProjectionData.GetConstrainedViewRect(), InvViewProjMatrix, /*out*/ WorldPosition, /*out*/ WorldDirection);
 			return true;
