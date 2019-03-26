@@ -33,9 +33,8 @@ public:
 
 	FMatrix GenerateOffAxisMatrix(float _screenWidth, float _screenHeight, FVector _eyeRelativePositon, EStereoscopicPass _PassType);
 
-	FMatrix GenerateOffAxisMatrix_Internal_Slow(float _screenWidth, float _screenHeight, FVector _eyeRelativePositon);
-	FMatrix GenerateOffAxisMatrix_Internal_Fast(FVector _eyeRelativePositon);
-	FMatrix GenerateOffAxisMatrix_Internal_Test(float _screenWidth, float _screenHeight, FVector _eyeRelativePositon);
+	FMatrix GenerateOffAxisMatrix_Internal_Slow(FVector _eyeRelativePositon);
+	FMatrix GenerateOffAxisMatrix_Internal_Test(FVector _eyeRelativePositon);
 
 
 	FMatrix FrustumMatrix(float left, float right, float bottom, float top, float nearVal, float farVal);
@@ -97,9 +96,6 @@ public:
 
 	//////////////////////////////////////////////////////////////////////////
 
-	UFUNCTION(BlueprintCallable, meta = (DisplayName = "SetTest1", Keywords = "OffAxisProjection SetTest1"), Category = "OffAxisProjection")
-		static int SetTest1(int _newVal);
-
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "OffAxisDeprojectScreenToWorld", Keywords = "OffAxis DeprojectScreenToWorld"), Category = "OffAxisProjection")
 		static bool OffAxisDeprojectScreenToWorld(APlayerController const* Player, const FVector2D& ScreenPosition, FVector& WorldPosition, FVector& WorldDirection);
 
@@ -142,7 +138,7 @@ static FRotator s_tmpRot = FRotator();
 static FVector s_EyePosition = FVector();
 static bool s_bUseoffAxis = false;
 
-static EOffAxisMethod s_OffAxisMethod = EOffAxisMethod::Fast;
+static EOffAxisMethod s_OffAxisMethod = EOffAxisMethod::Slow;
 
 static float s_Width = 0.f;
 static float s_Height = 0.f;
@@ -155,7 +151,6 @@ static float GFarClippingPlane = 10000.f;
 static FMatrix s_Frustum;
 
 //////////////////////////////////////////////////////////////////////////
-static int s_test1 = 0;
 static int s_test2 = 0;
 
 
