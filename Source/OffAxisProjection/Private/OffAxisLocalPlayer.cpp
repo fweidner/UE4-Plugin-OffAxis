@@ -14,7 +14,6 @@ FSceneView * UOffAxisLocalPlayer::CalcSceneView(FSceneViewFamily * ViewFamily, F
 
 	FSceneView* tmp = ULocalPlayer::CalcSceneView(ViewFamily, OutViewLocation, OutViewRotation, Viewport, ViewDrawer, StereoPass);
 
-	OutViewRotation = s_tmpRot;
 	if (s_bUseoffAxis && tmp)
 	{
 		UpdateProjectionMatrix_Internal(tmp, GenerateOffAxisMatrix(s_EyePosition, StereoPass), StereoPass);
