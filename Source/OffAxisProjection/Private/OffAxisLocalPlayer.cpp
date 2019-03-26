@@ -17,7 +17,7 @@ FSceneView * UOffAxisLocalPlayer::CalcSceneView(FSceneViewFamily * ViewFamily, F
 	OutViewRotation = s_tmpRot;
 	if (s_bUseoffAxis && tmp)
 	{
-		UpdateProjectionMatrix_Internal(tmp, GenerateOffAxisMatrix(s_Width, s_Height, s_EyePosition, StereoPass), StereoPass);
+		UpdateProjectionMatrix_Internal(tmp, GenerateOffAxisMatrix(s_EyePosition, StereoPass), StereoPass);
 	}
 
 	double end = FPlatformTime::Seconds();
@@ -186,7 +186,7 @@ FMatrix UOffAxisLocalPlayer::GenerateOffAxisMatrix_Internal_Test(FVector _eyeRel
 	return GenerateOffAxisMatrix_Internal_Slow(_eyeRelativePositon);
 }
 
-FMatrix UOffAxisLocalPlayer::GenerateOffAxisMatrix(float _screenWidth, float _screenHeight, FVector _eyeRelativePositon, EStereoscopicPass _PassType)
+FMatrix UOffAxisLocalPlayer::GenerateOffAxisMatrix(FVector _eyeRelativePositon, EStereoscopicPass _PassType)
 {
 	FVector adjustedEyePositionForS3D = _eyeRelativePositon;
 	switch (_PassType)
@@ -224,18 +224,6 @@ FVector UOffAxisLocalPlayer::UpdateEyeRelativePosition(FVector _eyeRelativePosit
 {
 	s_EyePosition = _eyeRelativePosition;
 	return s_EyePosition;
-}
-
-float UOffAxisLocalPlayer::SetWidth(float _width)
-{
-	s_Width = _width;
-	return s_Width;
-}
-
-float UOffAxisLocalPlayer::SetHeight(float _height)
-{
-	s_Height = _height;
-	return s_Height;
 }
 
 EOffAxisMethod UOffAxisLocalPlayer::ToggleOffAxisMethod()

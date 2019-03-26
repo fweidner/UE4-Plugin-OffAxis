@@ -31,16 +31,12 @@ public:
 
 	void UpdateProjectionMatrix_Internal(FSceneView * View, FMatrix OffAxisMatrix, EStereoscopicPass _Pass);
 
-	FMatrix GenerateOffAxisMatrix(float _screenWidth, float _screenHeight, FVector _eyeRelativePositon, EStereoscopicPass _PassType);
+	FMatrix GenerateOffAxisMatrix(FVector _eyeRelativePositon, EStereoscopicPass _PassType);
 
 	FMatrix GenerateOffAxisMatrix_Internal_Slow(FVector _eyeRelativePositon);
 	FMatrix GenerateOffAxisMatrix_Internal_Test(FVector _eyeRelativePositon);
-
-
+	
 	FMatrix FrustumMatrix(float left, float right, float bottom, float top, float nearVal, float farVal);
-
-
-
 
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "PrintCurrentOffAxisVersion", Keywords = "OffAxisProjection print"), Category = "OffAxisProjection")
 		static FText GetOffAxisEnumValueAsString(EOffAxisMethod _val);
@@ -51,13 +47,7 @@ public:
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UpdateEyeRelativePosition", Keywords = "OffAxisProjection update relative eye position "), Category = "OffAxisProjection")
 		static FVector UpdateEyeRelativePosition(FVector _eyeRelativePosition);
 
-	UFUNCTION(BlueprintCallable, meta = (DisplayName = "SetWidth", Keywords = "OffAxisProjection width "), Category = "OffAxisProjection")
-		static float SetWidth(float _width);
-
-	UFUNCTION(BlueprintCallable, meta = (DisplayName = "SetHeight", Keywords = "OffAxisProjection height "), Category = "OffAxisProjection")
-		static float SetHeight(float _height);
-
-	UFUNCTION(BlueprintCallable, meta = (DisplayName = "ToggleOffAxisMethod", Keywords = "OffAxisProjection toggle method "), Category = "OffAxisProjection")
+ 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "ToggleOffAxisMethod", Keywords = "OffAxisProjection toggle method "), Category = "OffAxisProjection")
 		static EOffAxisMethod ToggleOffAxisMethod();
 
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "PrintCurrentOffAxisVersion", Keywords = "OffAxisProjection print"), Category = "OffAxisProjection")
@@ -139,9 +129,6 @@ static FVector s_EyePosition = FVector();
 static bool s_bUseoffAxis = false;
 
 static EOffAxisMethod s_OffAxisMethod = EOffAxisMethod::Slow;
-
-static float s_Width = 0.f;
-static float s_Height = 0.f;
 
 static FVector s_TopLeftCorner = FVector();
 static FVector s_BottomRightCorner = FVector();
