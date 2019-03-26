@@ -138,10 +138,6 @@ static float GFarClippingPlane = 10000.f;
 static FMatrix s_Frustum;
 
 //////////////////////////////////////////////////////////////////////////
-static int s_test2 = 0;
-
-
-//////////////////////////////////////////////////////////////////////////
 static FVector pa = FVector(-1.f, -1.f, 0.f);
 static FVector pb = FVector(1.f, -1.f, 0.f);
 static FVector pc = FVector(1.f, 1.f, 0.f);

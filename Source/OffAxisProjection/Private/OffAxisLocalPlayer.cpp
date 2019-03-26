@@ -100,8 +100,6 @@ void UOffAxisLocalPlayer::InitOffAxisProjection_Fast(float _screenWidth, float _
 	Frustum.M[2][3] = -1.0f;
 	Frustum.M[3][2] = -(2.f*GFarClippingPlane * GNearClippingPlane) / (GFarClippingPlane - GNearClippingPlane);
 	Frustum.M[3][3] = 0.0f;
-
-
 }
 
 FMatrix UOffAxisLocalPlayer::GenerateOffAxisMatrix_Internal_Slow(FVector _eyeRelativePositon)
