@@ -74,8 +74,8 @@ void UOffAxisLocalPlayer::UpdateProjectionMatrix_Internal(FSceneView* View, FMat
 	axisChanger.M[2][1] = 1.0f;
 
 
-	View->ViewRotation = s_tmpRot;
-	GEngine->AddOnScreenDebugMessage(300, 1, FColor::Red, FString::Printf(TEXT("s_tmpRot: %s"), *s_tmpRot.ToString()));
+	View->ViewRotation = s_ViewRotation;
+	GEngine->AddOnScreenDebugMessage(300, 1, FColor::Red, FString::Printf(TEXT("s_tmpRot: %s"), *s_ViewRotation.ToString()));
 
 	View->UpdateViewMatrix();
 
@@ -186,15 +186,28 @@ FMatrix UOffAxisLocalPlayer::GenerateOffAxisMatrix_Internal_Test(FVector _eyeRel
 FMatrix UOffAxisLocalPlayer::GenerateOffAxisMatrix(FVector _eyeRelativePositon, EStereoscopicPass _PassType)
 {
 	FVector adjustedEyePositionForS3D = _eyeRelativePositon;
+
+	FVector eyeoffsetvector = FVector(s_EyeOffsetVal, 0.f, 0.f);
+	//eyeoffsetvector.Normalize();
+	//eyeoffsetvector = s_ViewRotation.RotateVector(eyeoffsetvector);
+		
+	GEngine->AddOnScreenDebugMessage(48, 0, FColor::Black, FString::Printf(TEXT("Feyeoffsetvector: %s"), *eyeoffsetvector.ToString()));
+	GEngine->AddOnScreenDebugMessage(48, 0, FColor::Black, FString::Printf(TEXT("s_ViewRotation: %s"), *s_ViewRotation.ToString()));
+//	GEngine->AddOnScreenDebugMessage(48, 0, FColor::Black, FString::Printf(TEXT("s_ViewRotation: %s"), ));
+	
+	
+	
+	
+
 	switch (_PassType)
 	{
 	case eSSP_FULL:
 		break;
 	case eSSP_LEFT_EYE:
-		adjustedEyePositionForS3D += FVector(s_EyeOffsetVal, 0.f, 0.f);
+		adjustedEyePositionForS3D += eyeoffsetvector;
 		break;
 	case eSSP_RIGHT_EYE:
-		adjustedEyePositionForS3D -= FVector(s_EyeOffsetVal, 0.f, 0.f);
+		adjustedEyePositionForS3D -= eyeoffsetvector;
 		break;
 	case eSSP_MONOSCOPIC_EYE:
 		break;
@@ -205,11 +218,11 @@ FMatrix UOffAxisLocalPlayer::GenerateOffAxisMatrix(FVector _eyeRelativePositon, 
 	switch (s_OffAxisMethod)
 	{
 	case EOffAxisMethod::Slow:
-		return GenerateOffAxisMatrix_Internal_Slow(_eyeRelativePositon);
+		return GenerateOffAxisMatrix_Internal_Slow(adjustedEyePositionForS3D);
 	case EOffAxisMethod::Test:
-		return GenerateOffAxisMatrix_Internal_Test(_eyeRelativePositon);
+		return GenerateOffAxisMatrix_Internal_Test(adjustedEyePositionForS3D);
 	default:
-		return GenerateOffAxisMatrix_Internal_Slow(_eyeRelativePositon);
+		return GenerateOffAxisMatrix_Internal_Slow(adjustedEyePositionForS3D);
 	}
 }
 
@@ -252,14 +265,14 @@ FVector UOffAxisLocalPlayer::UpdateTmpVector(FVector _newVal)
 
 FRotator UOffAxisLocalPlayer::UpdateTmpRotator(FRotator _newVal)
 {
-	s_tmpRot = _newVal;
-	return s_tmpRot;
+	s_ViewRotation = _newVal;
+	return s_ViewRotation;
 }
 
 FRotator UOffAxisLocalPlayer::AddTmpRotaterOffset(FRotator _offset)
 {
-	s_tmpRot += _offset;
-	return s_tmpRot;
+	s_ViewRotation += _offset;
+	return s_ViewRotation;
 }
 
 bool UOffAxisLocalPlayer::UpdateShowDebugMessages(bool _newVal)
@@ -294,7 +307,7 @@ float UOffAxisLocalPlayer::UpdateEyeOffsetForStereo(float _newVal)
 	s_EyeOffsetVal += _newVal;
 
 	if (s_ShowDebugMessages)
-		GEngine->AddOnScreenDebugMessage(40, 2, FColor::Cyan, FString::Printf(TEXT("EyeDistance: %f"), 2 * s_EyeOffsetVal));
+		GEngine->AddOnScreenDebugMessage(45, 2, FColor::Cyan, FString::Printf(TEXT("EyeDistance: %f"), 2 * s_EyeOffsetVal));
 	return s_EyeOffsetVal;
 }
 
@@ -302,7 +315,7 @@ float UOffAxisLocalPlayer::UpdateProjectionPlaneOffsetForStereo(float _newVal)
 {
 	s_ProjectionPlaneOffset += _newVal;
 	if (s_ShowDebugMessages)
-		GEngine->AddOnScreenDebugMessage(50, 2, FColor::Cyan, FString::Printf(TEXT("ProjectionPlaneOffset: %f"), s_ProjectionPlaneOffset));
+		GEngine->AddOnScreenDebugMessage(55, 2, FColor::Cyan, FString::Printf(TEXT("ProjectionPlaneOffset: %f"), s_ProjectionPlaneOffset));
 	return s_ProjectionPlaneOffset;
 }
 
@@ -382,6 +395,9 @@ bool UOffAxisLocalPlayer::OffAxisDeprojectScreenToWorld(APlayerController const*
 {
 	float x, y;
 	Player->GetMousePosition(x, y);
+
+	GEngine->AddOnScreenDebugMessage(65, 2, FColor::Cyan, FString::Printf(TEXT("x: %f | y: %f"), x,y));
+
 	return OffAxisDeprojectScreenToWorld(Player, FVector2D(x,y), WorldPosition, WorldDirection);
 }
 

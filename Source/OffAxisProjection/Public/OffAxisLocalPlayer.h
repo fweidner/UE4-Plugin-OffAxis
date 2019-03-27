@@ -122,7 +122,7 @@ static float s_EyeOffsetVal = 3.2f;
 static bool s_ShowDebugMessages = false;
 
 static FVector s_tmpVec = FVector();
-static FRotator s_tmpRot = FRotator();
+static FRotator s_ViewRotation = FRotator();
 
 //////////////////////////////////////////////////////////////////////////
 static FVector s_EyePosition = FVector();
