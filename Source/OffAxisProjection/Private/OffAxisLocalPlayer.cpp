@@ -403,16 +403,16 @@ bool UOffAxisLocalPlayer::OffAxisDeprojectScreenToWorld(APlayerController const*
 {
 	float x, y;
 	Player->GetMousePosition(x, y);
+	GEngine->AddOnScreenDebugMessage(64, 10, FColor::Emerald, FString::Printf(TEXT("x: %f | y: %f"), x, y));
 
-	x = 640- 3.2f;
-	if (x < 1280 / 2)
+	if (x <= 1280 / 2)
 	{
-		//x += 320;
+		x*=2;
 		GEngine->AddOnScreenDebugMessage(66, 10, FColor::Emerald, FString::Printf(TEXT("x: %f | y: %f"), x, y));
 	}
 	else
 	{
-		//x = x - 320;
+		x = (x - 640)*2; //use width!
 		GEngine->AddOnScreenDebugMessage(67, 10, FColor::Black, FString::Printf(TEXT("x: %f | y: %f"), x, y));
 	}
 
