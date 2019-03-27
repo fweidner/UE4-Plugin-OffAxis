@@ -345,25 +345,38 @@ void UOffAxisLocalPlayer::SetPx(bool _setpa, FVector _pa, bool _setpb, FVector _
 /* PICKING                                                              */
 /************************************************************************/
 
-bool UOffAxisLocalPlayer::OffAxisDeprojectScreenToWorld(APlayerController const* Player, const FVector2D& ScreenPosition, FVector& WorldPosition, FVector& WorldDirection)
+bool UOffAxisLocalPlayer::OffAxisDeprojectScreenToWorld_Internal(
+	APlayerController const* player, 
+	FVector2D& _screenPosition, 
+	FVector& WorldPosition, 
+	FVector& WorldDirection)
 {
-	ULocalPlayer* const LP = Player ? Player->GetLocalPlayer() : nullptr;
-	
+	//////////////////////////////////////////////////////////////////////////
+
+	ULocalPlayer* const LP = player ? player->GetLocalPlayer() : nullptr;
+		
 	if (LP && LP->ViewportClient)
 	{
 		// get the projection data
 		FSceneViewProjectionData ProjectionData;
-		
-		if (LP->GetProjectionData(LP->ViewportClient->Viewport, eSSP_FULL, /*out*/ ProjectionData))
+		if (_screenPosition.X < 640)
 		{
-			ProjectionData.ProjectionMatrix = s_ProjectionMatrix;
-			s_ProjectionMatrix = FTranslationMatrix(-ProjectionData.ViewOrigin) * ProjectionData.ViewRotationMatrix * s_ProjectionMatrix;
-			
-			FMatrix const InvViewProjMatrix = s_ProjectionMatrix.Inverse();
-
-			FSceneView::DeprojectScreenToWorld(ScreenPosition, ProjectionData.GetConstrainedViewRect(), InvViewProjMatrix, /*out*/ WorldPosition, /*out*/ WorldDirection);
-			return true;
+			LP->GetProjectionData(LP->ViewportClient->Viewport, eSSP_LEFT_EYE, /*out*/ ProjectionData);
 		}
+		else
+		{
+			LP->GetProjectionData(LP->ViewportClient->Viewport, eSSP_RIGHT_EYE, /*out*/ ProjectionData);
+		}
+
+		FMatrix t = s_ProjectionMatrix; 
+		ProjectionData.ProjectionMatrix = t;
+				
+		t = FTranslationMatrix(-ProjectionData.ViewOrigin) * ProjectionData.ViewRotationMatrix * t;
+			
+		FMatrix const InvViewProjMatrix = t.Inverse();
+
+		FSceneView::DeprojectScreenToWorld(_screenPosition, ProjectionData.GetConstrainedViewRect(), InvViewProjMatrix, /*out*/ WorldPosition, /*out*/ WorldDirection);
+		return true;
 	}
 
 	// something went wrong, zero things and return false
@@ -372,60 +385,54 @@ bool UOffAxisLocalPlayer::OffAxisDeprojectScreenToWorld(APlayerController const*
 	return false;
 }
 
-bool UOffAxisLocalPlayer::OffAxisDeprojectScreenToWorld(APlayerController const* Player, FVector& WorldPosition, FVector& WorldDirection)
+
+
+bool UOffAxisLocalPlayer::OffAxisLineTraceByChannel(
+	UObject* WorldContextObject, 
+	/*out*/ struct FHitResult& OutHit, 
+	FVector _eyeRelativePosition,
+	bool bDrawDebugLine, 
+	FColor _color, 
+	bool bPersistentLines /*= false*/, 
+	float _lifeTime /*= 10.f*/, 
+	uint8 _depthPriority /*= 0*/,
+	float _thickness /*= 1.f*/,	
+	float _LengthOfRay /*= 1000.f*/)
 {
+
+	//////////////////////////////////////////////////////////////////////////
+
+	//get mouse position
+	APlayerController* player = UGameplayStatics::GetPlayerController(WorldContextObject, 0);
 	float x, y;
-	Player->GetMousePosition(x, y);
-	//GEngine->AddOnScreenDebugMessage(64, 10, FColor::Emerald, FString::Printf(TEXT("x: %f | y: %f"), x, y));
-	FVector2D viewportsize = FVector2D(1280, 640);
-	if (GEngine && GEngine->GameViewport)
-	{
-		GEngine->GameViewport->GetViewportSize(/*out*/ viewportsize);
-		//GSystemResolution.ResX
-		//GSystemResolution.ResY
-	}
-	//GEngine->AddOnScreenDebugMessage(66, 10, FColor::Emerald, FString::Printf(TEXT("Viewportsize: %s"), *viewportsize.ToString())); //correct? or do I need res?
+	player->GetMousePosition(x, y);
+	FVector2D screenPosition = FVector2D(x, y);
 
+	//undo eye offset for correct picking. 
+	
 
-	//if stereo is enabled, do picking always in the left eye part of the viewport.
-	if (x <= viewportsize.X / 2)
+	
+	//Correct eye offset
+	FVector tmpEyeRelativePosition = _eyeRelativePosition;//-EyeOffsetVector for start position;
+	if (x <= 640)
 	{
-		x*=2;
-		//GEngine->AddOnScreenDebugMessage(66, 10, FColor::Emerald, FString::Printf(TEXT("x: %f | y: %f"), x, y));
+		tmpEyeRelativePosition += EyeOffsetVector;
 	}
 	else
 	{
-		x = (x - viewportsize.X/2)*2; //TODO use width!
-		//GEngine->AddOnScreenDebugMessage(67, 10, FColor::Black, FString::Printf(TEXT("x: %f | y: %f"), x, y));
+		tmpEyeRelativePosition -= EyeOffsetVector;
 	}
 
-	return OffAxisDeprojectScreenToWorld(Player, FVector2D(x,y), WorldPosition, WorldDirection);
-}
-
-bool UOffAxisLocalPlayer::OffAxisLineTraceByChannel(
-			UObject* WorldContextObject, 
-			/*out*/ struct FHitResult& OutHit, 
-			FVector _eyeRelativePosition,
-			bool bDrawDebugLine,
-			FColor _color,
-			bool bPersistentLines /*= false*/,
-			float _lifeTime /*= 10.f*/,
-			uint8 _depthPriority /*= 0*/,
-			float _thickness /*= 1.f*/,
-			float _LengthOfRay /*= 1000.f*/)
-{
 	//transform eyeRelativePosition to UE4 coordinates
-	FVector tmpEyeRelativePosition = _eyeRelativePosition - EyeOffsetVector;
-
-	//undo eye offset for correct picking. 
 	FVector _eyeRelativePositioninUE4Coord = FVector(tmpEyeRelativePosition.Z, tmpEyeRelativePosition.X, tmpEyeRelativePosition.Y);
 
+	
 	//get end position for ray trace
 	FVector WorldPosition, WorldDirection;
-	OffAxisDeprojectScreenToWorld(UGameplayStatics::GetPlayerController(WorldContextObject, 0), WorldPosition, WorldDirection);
+	OffAxisDeprojectScreenToWorld_Internal(player, screenPosition, WorldPosition, WorldDirection);
 	FVector end = WorldPosition + _LengthOfRay * WorldDirection;
 
-
+	
 
 	if (bDrawDebugLine)
 	{
@@ -434,8 +441,8 @@ bool UOffAxisLocalPlayer::OffAxisLineTraceByChannel(
 		//UE_LOG(OffAxisLog, Log, TEXT("Start: %s"), *_eyeRelativePosition.ToString());
 		//UE_LOG(OffAxisLog, Log, TEXT("End  : %s"), *end.ToString());
 		
-		GEngine->AddOnScreenDebugMessage(301, 10, FColor::Cyan, FString::Printf(TEXT("Start: %s"), *_eyeRelativePosition.ToString()));
-		GEngine->AddOnScreenDebugMessage(302, 10, FColor::Cyan, FString::Printf(TEXT("End: %s"), *end.ToString()));
+		GEngine->AddOnScreenDebugMessage(301, 10, FColor::Cyan, FString::Printf(TEXT("Start: %s"), *_eyeRelativePositioninUE4Coord.ToString()));
+		GEngine->AddOnScreenDebugMessage(302, 10, FColor::Cyan, FString::Printf(TEXT("End  : %s"), *end.ToString()));
 	}
 	
 	//do raytrace

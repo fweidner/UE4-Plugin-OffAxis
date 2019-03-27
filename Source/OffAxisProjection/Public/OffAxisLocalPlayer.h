@@ -87,7 +87,7 @@ public:
 	//////////////////////////////////////////////////////////////////////////
 
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "OffAxisDeprojectScreenToWorld", Keywords = "OffAxis DeprojectScreenToWorld"), Category = "OffAxisProjection")
-		static bool OffAxisDeprojectScreenToWorld(APlayerController const* Player, const FVector2D& ScreenPosition, FVector& WorldPosition, FVector& WorldDirection);
+		static bool OffAxisDeprojectScreenToWorld_Internal(APlayerController const* Player, FVector2D& _screenPosition, FVector& WorldPosition, FVector& WorldDirection);
 
 	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject", DisplayName = "OffAxisLineTraceByChannel", AdvancedDisplay = "_color,bPersistentLines,_lifeTime,_depthPriority,_thickness,_LengthOfRay", Keywords = " OffAxis LineTraceByChannel"), Category = "OffAxisProjection")
 		static bool OffAxisLineTraceByChannel(
@@ -101,8 +101,6 @@ public:
 			uint8 _depthPriority = 0, 
 			float _thickness = 1.f, 
 			float _LengthOfRay = 1000.f);
-
-	static bool OffAxisDeprojectScreenToWorld(APlayerController const* Player, FVector& WorldPosition, FVector& WorldDirection);
 
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "OffAxisSetPx", Keywords = "OffAxis SetPx"), Category = "OffAxisProjection")
 		static void SetPx(bool _setpa, FVector _pa , bool _setpb, FVector _pb, bool _setpc, FVector _pc);
