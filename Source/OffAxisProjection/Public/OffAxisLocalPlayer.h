@@ -112,7 +112,6 @@ private:
 	float OffAxisFarPlane = 10000.f;
 	float OffAxisNearPlane = .1f;
 	EStereoscopicPass CurrentPassType;
-	FVector EyeOffsetVector = FVector(0.f, 0.f, 0.f);
 	
 };
 
@@ -146,6 +145,8 @@ static FVector pc = FVector(1.f, 1.f, 0.f);
 static FVector pe = FVector(0.f, 0.f, 0.f);
 
 static FMatrix s_ProjectionMatrix = FMatrix();
+
+static FVector EyeOffsetVector = FVector(0.f, 0.f, 0.f);
 
 //////////////////////////////////////////////////////////////////////////
 

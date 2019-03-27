@@ -194,9 +194,6 @@ FMatrix UOffAxisLocalPlayer::GenerateOffAxisMatrix(FVector _eyeRelativePosition,
 //	GEngine->AddOnScreenDebugMessage(0, 0, FColor::Black, FString::Printf(TEXT("s_ViewRotation: %s"), *s_ViewRotation.ToString()));
 //	GEngine->AddOnScreenDebugMessage(48, 0, FColor::Black, FString::Printf(TEXT("s_ViewRotation: %s"), ));
 	 
-
-
-
 	FVector adjustedEyePositionForS3D = _eyeRelativePosition + EyeOffsetVector;
 
 	switch (s_OffAxisMethod)
@@ -379,17 +376,18 @@ bool UOffAxisLocalPlayer::OffAxisDeprojectScreenToWorld(APlayerController const*
 {
 	float x, y;
 	Player->GetMousePosition(x, y);
-	GEngine->AddOnScreenDebugMessage(64, 10, FColor::Emerald, FString::Printf(TEXT("x: %f | y: %f"), x, y));
+	//GEngine->AddOnScreenDebugMessage(64, 10, FColor::Emerald, FString::Printf(TEXT("x: %f | y: %f"), x, y));
 
+	//if stereo is enabled, do picking always in the left eye part of the viewport.
 	if (x <= 1280 / 2)
 	{
 		x*=2;
-		GEngine->AddOnScreenDebugMessage(66, 10, FColor::Emerald, FString::Printf(TEXT("x: %f | y: %f"), x, y));
+		//GEngine->AddOnScreenDebugMessage(66, 10, FColor::Emerald, FString::Printf(TEXT("x: %f | y: %f"), x, y));
 	}
 	else
 	{
 		x = (x - 640)*2; //use width!
-		GEngine->AddOnScreenDebugMessage(67, 10, FColor::Black, FString::Printf(TEXT("x: %f | y: %f"), x, y));
+		//GEngine->AddOnScreenDebugMessage(67, 10, FColor::Black, FString::Printf(TEXT("x: %f | y: %f"), x, y));
 	}
 
 	return OffAxisDeprojectScreenToWorld(Player, FVector2D(x,y), WorldPosition, WorldDirection);
@@ -408,25 +406,10 @@ bool UOffAxisLocalPlayer::OffAxisLineTraceByChannel(
 			float _LengthOfRay /*= 1000.f*/)
 {
 	//transform eyeRelativePosition to UE4 coordinates
-	FVector _eyeRelativePositioninUE4Coord = FVector(_eyeRelativePosition.Z, _eyeRelativePosition.X, _eyeRelativePosition.Y);
+	FVector tmpEyeRelativePosition = _eyeRelativePosition - EyeOffsetVector;
 
-// 	switch (CurrentPassType)
-// 	{
-// 	case eSSP_FULL:
-// 		break;
-// 	case eSSP_LEFT_EYE:
-// 		_eyeRelativePositioninUE4Coord += EyeOffsetVector;
-// 		break;
-// 	case eSSP_RIGHT_EYE:
-// 		_eyeRelativePositioninUE4Coord -= EyeOffsetVector;
-// 		break;
-// 	case eSSP_MONOSCOPIC_EYE:
-// 		break;
-// 	default:
-// 		break;
-// 	}
-
-
+	//undo eye offset for correct picking. 
+	FVector _eyeRelativePositioninUE4Coord = FVector(tmpEyeRelativePosition.Z, tmpEyeRelativePosition.X, tmpEyeRelativePosition.Y);
 
 	//get end position for ray trace
 	FVector WorldPosition, WorldDirection;
