@@ -142,11 +142,11 @@ static FMatrix s_Frustum;
 static FVector pa = FVector(-1.f, -1.f, 0.f);
 static FVector pb = FVector(1.f, -1.f, 0.f);
 static FVector pc = FVector(1.f, 1.f, 0.f);
-static FVector pe = FVector(0.f, 0.f, 0.f);
+static FVector pe = FVector::ZeroVector;
 
 static FMatrix s_ProjectionMatrix = FMatrix();
 
-static FVector EyeOffsetVector = FVector(0.f, 0.f, 0.f);
+static FVector EyeOffsetVector = FVector::ZeroVector;
 
 //////////////////////////////////////////////////////////////////////////
 
