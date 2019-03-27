@@ -82,7 +82,7 @@ public:
 		static float ResetProjectionPlaneOffsetForStereo(float _newVal);
 
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "ResetEyeOffsetForStereo", Keywords = "OffAxisProjection eye offset eyeoffset reset "), Category = "OffAxisProjection")
-		static float ResetEyeOffsetForStereo(float _newVal = 3.200001);
+		static float ResetEyeOffsetForStereo(float _newVal = 3.200001f);
 
 	//////////////////////////////////////////////////////////////////////////
 
@@ -111,12 +111,14 @@ private:
 	FMatrix mOffAxisMatrix = FMatrix();
 	float OffAxisFarPlane = 10000.f;
 	float OffAxisNearPlane = .1f;
+	EStereoscopicPass CurrentPassType;
+	FVector EyeOffsetVector = FVector(0.f, 0.f, 0.f);
 	
 };
 
 //////////////////////////////////////////////////////////////////////////
 static float s_ProjectionPlaneOffset = 0.f;
-static float s_EyeOffsetVal = 3.2f;
+static float s_EyeOffsetVal = 3.200001f;
 
 //////////////////////////////////////////////////////////////////////////
 static bool s_ShowDebugMessages = false;
@@ -146,3 +148,4 @@ static FVector pe = FVector(0.f, 0.f, 0.f);
 static FMatrix s_ProjectionMatrix = FMatrix();
 
 //////////////////////////////////////////////////////////////////////////
+

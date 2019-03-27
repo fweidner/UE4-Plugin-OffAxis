@@ -47,6 +47,8 @@ FMatrix UOffAxisLocalPlayer::FrustumMatrix(float left, float right, float bottom
 void UOffAxisLocalPlayer::UpdateProjectionMatrix_Internal(FSceneView* View, FMatrix OffAxisMatrix, EStereoscopicPass _Pass)
 {
 	FMatrix stereoProjectionMatrix = OffAxisMatrix;
+	EyeOffsetVector = FVector(s_EyeOffsetVal, 0.f, 0.f);
+	CurrentPassType = _Pass;
 
 	switch (_Pass)
 	{
@@ -54,9 +56,12 @@ void UOffAxisLocalPlayer::UpdateProjectionMatrix_Internal(FSceneView* View, FMat
 		break;
 	case eSSP_LEFT_EYE:
 		stereoProjectionMatrix = FTranslationMatrix(FVector(s_ProjectionPlaneOffset, 0.f, 0.f)) * OffAxisMatrix;
+
+		EyeOffsetVector = EyeOffsetVector;
 		break;
 	case eSSP_RIGHT_EYE:
 		stereoProjectionMatrix = FTranslationMatrix(FVector(-s_ProjectionPlaneOffset, 0.f, 0.f)) * OffAxisMatrix;
+		EyeOffsetVector = -EyeOffsetVector;
 		break;
 	case eSSP_MONOSCOPIC_EYE:
 		break;
@@ -183,45 +188,16 @@ FMatrix UOffAxisLocalPlayer::GenerateOffAxisMatrix_Internal_Test(FVector _eyeRel
 	return GenerateOffAxisMatrix_Internal_Slow(_eyeRelativePositon);
 }
 
-FMatrix UOffAxisLocalPlayer::GenerateOffAxisMatrix(FVector _eyeRelativePositon, EStereoscopicPass _PassType)
-{
-	FVector adjustedEyePositionForS3D = _eyeRelativePositon;
-
-	FVector eyeoffsetvector = FVector(s_EyeOffsetVal, 0.f, 0.f);
-	//eyeoffsetvector.Normalize();
-	//eyeoffsetvector = s_ViewRotation.RotateVector(eyeoffsetvector);
-		
+FMatrix UOffAxisLocalPlayer::GenerateOffAxisMatrix(FVector _eyeRelativePosition, EStereoscopicPass _PassType)
+{	
 //	GEngine->AddOnScreenDebugMessage(0, 0, FColor::Black, FString::Printf(TEXT("Feyeoffsetvector: %s"), *eyeoffsetvector.ToString()));
 //	GEngine->AddOnScreenDebugMessage(0, 0, FColor::Black, FString::Printf(TEXT("s_ViewRotation: %s"), *s_ViewRotation.ToString()));
 //	GEngine->AddOnScreenDebugMessage(48, 0, FColor::Black, FString::Printf(TEXT("s_ViewRotation: %s"), ));
-	
-	
-	
-	
-
-	switch (_PassType)
-	{
-	case eSSP_FULL:
-		break;
-	case eSSP_LEFT_EYE:
-		adjustedEyePositionForS3D += eyeoffsetvector;
-		break;
-	case eSSP_RIGHT_EYE:
-		adjustedEyePositionForS3D -= eyeoffsetvector;
-		break;
-	case eSSP_MONOSCOPIC_EYE:
-
-	
+	 
 
 
 
-
-
-
-		break;
-	default:
-		break;
-	}
+	FVector adjustedEyePositionForS3D = _eyeRelativePosition + EyeOffsetVector;
 
 	switch (s_OffAxisMethod)
 	{
@@ -433,6 +409,24 @@ bool UOffAxisLocalPlayer::OffAxisLineTraceByChannel(
 {
 	//transform eyeRelativePosition to UE4 coordinates
 	FVector _eyeRelativePositioninUE4Coord = FVector(_eyeRelativePosition.Z, _eyeRelativePosition.X, _eyeRelativePosition.Y);
+
+// 	switch (CurrentPassType)
+// 	{
+// 	case eSSP_FULL:
+// 		break;
+// 	case eSSP_LEFT_EYE:
+// 		_eyeRelativePositioninUE4Coord += EyeOffsetVector;
+// 		break;
+// 	case eSSP_RIGHT_EYE:
+// 		_eyeRelativePositioninUE4Coord -= EyeOffsetVector;
+// 		break;
+// 	case eSSP_MONOSCOPIC_EYE:
+// 		break;
+// 	default:
+// 		break;
+// 	}
+
+
 
 	//get end position for ray trace
 	FVector WorldPosition, WorldDirection;
