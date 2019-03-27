@@ -322,8 +322,6 @@ FText UOffAxisLocalPlayer::GetOffAxisEnumValueAsString(EOffAxisMethod _val)
 
 void UOffAxisLocalPlayer::SetPx(bool _setpa, FVector _pa, bool _setpb, FVector _pb, bool _setpc, FVector _pc)
 {
-	GEngine->AddOnScreenDebugMessage(10, 2, FColor::Blue, FString::Printf(TEXT("_pa: %s"), *_pa.ToString()));
-
 	if (_setpa)
 	{
 		pa = _pa;
@@ -336,9 +334,6 @@ void UOffAxisLocalPlayer::SetPx(bool _setpa, FVector _pa, bool _setpb, FVector _
 	{
 		pc = _pc;
 	}
-
-	GEngine->AddOnScreenDebugMessage(100, 2, FColor::Blue, FString::Printf(TEXT("pa: %s"), *pa.ToString()));
-
 }
 
 /************************************************************************/
