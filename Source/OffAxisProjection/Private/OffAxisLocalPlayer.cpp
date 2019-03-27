@@ -377,16 +377,25 @@ bool UOffAxisLocalPlayer::OffAxisDeprojectScreenToWorld(APlayerController const*
 	float x, y;
 	Player->GetMousePosition(x, y);
 	//GEngine->AddOnScreenDebugMessage(64, 10, FColor::Emerald, FString::Printf(TEXT("x: %f | y: %f"), x, y));
+	FVector2D viewportsize = FVector2D(1280, 640);
+	if (GEngine && GEngine->GameViewport)
+	{
+		GEngine->GameViewport->GetViewportSize(/*out*/ viewportsize);
+		//GSystemResolution.ResX
+		//GSystemResolution.ResY
+	}
+	//GEngine->AddOnScreenDebugMessage(66, 10, FColor::Emerald, FString::Printf(TEXT("Viewportsize: %s"), *viewportsize.ToString())); //correct? or do I need res?
+
 
 	//if stereo is enabled, do picking always in the left eye part of the viewport.
-	if (x <= 1280 / 2)
+	if (x <= viewportsize.X / 2)
 	{
 		x*=2;
 		//GEngine->AddOnScreenDebugMessage(66, 10, FColor::Emerald, FString::Printf(TEXT("x: %f | y: %f"), x, y));
 	}
 	else
 	{
-		x = (x - 640)*2; //use width!
+		x = (x - viewportsize.X/2)*2; //TODO use width!
 		//GEngine->AddOnScreenDebugMessage(67, 10, FColor::Black, FString::Printf(TEXT("x: %f | y: %f"), x, y));
 	}
 
