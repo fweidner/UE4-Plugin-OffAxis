@@ -75,7 +75,7 @@ void UOffAxisLocalPlayer::UpdateProjectionMatrix_Internal(FSceneView* View, FMat
 
 
 	View->ViewRotation = s_ViewRotation;
-	GEngine->AddOnScreenDebugMessage(300, 1, FColor::Red, FString::Printf(TEXT("s_tmpRot: %s"), *s_ViewRotation.ToString()));
+	//GEngine->AddOnScreenDebugMessage(300, 1, FColor::Red, FString::Printf(TEXT("s_tmpRot: %s"), *s_ViewRotation.ToString()));
 
 	View->UpdateViewMatrix();
 
@@ -191,8 +191,8 @@ FMatrix UOffAxisLocalPlayer::GenerateOffAxisMatrix(FVector _eyeRelativePositon, 
 	//eyeoffsetvector.Normalize();
 	//eyeoffsetvector = s_ViewRotation.RotateVector(eyeoffsetvector);
 		
-	GEngine->AddOnScreenDebugMessage(48, 0, FColor::Black, FString::Printf(TEXT("Feyeoffsetvector: %s"), *eyeoffsetvector.ToString()));
-	GEngine->AddOnScreenDebugMessage(48, 0, FColor::Black, FString::Printf(TEXT("s_ViewRotation: %s"), *s_ViewRotation.ToString()));
+//	GEngine->AddOnScreenDebugMessage(0, 0, FColor::Black, FString::Printf(TEXT("Feyeoffsetvector: %s"), *eyeoffsetvector.ToString()));
+//	GEngine->AddOnScreenDebugMessage(0, 0, FColor::Black, FString::Printf(TEXT("s_ViewRotation: %s"), *s_ViewRotation.ToString()));
 //	GEngine->AddOnScreenDebugMessage(48, 0, FColor::Black, FString::Printf(TEXT("s_ViewRotation: %s"), ));
 	
 	
@@ -210,6 +210,14 @@ FMatrix UOffAxisLocalPlayer::GenerateOffAxisMatrix(FVector _eyeRelativePositon, 
 		adjustedEyePositionForS3D -= eyeoffsetvector;
 		break;
 	case eSSP_MONOSCOPIC_EYE:
+
+	
+
+
+
+
+
+
 		break;
 	default:
 		break;
@@ -396,7 +404,17 @@ bool UOffAxisLocalPlayer::OffAxisDeprojectScreenToWorld(APlayerController const*
 	float x, y;
 	Player->GetMousePosition(x, y);
 
-	GEngine->AddOnScreenDebugMessage(65, 2, FColor::Cyan, FString::Printf(TEXT("x: %f | y: %f"), x,y));
+	x = 640- 3.2f;
+	if (x < 1280 / 2)
+	{
+		//x += 320;
+		GEngine->AddOnScreenDebugMessage(66, 10, FColor::Emerald, FString::Printf(TEXT("x: %f | y: %f"), x, y));
+	}
+	else
+	{
+		//x = x - 320;
+		GEngine->AddOnScreenDebugMessage(67, 10, FColor::Black, FString::Printf(TEXT("x: %f | y: %f"), x, y));
+	}
 
 	return OffAxisDeprojectScreenToWorld(Player, FVector2D(x,y), WorldPosition, WorldDirection);
 }
@@ -421,15 +439,17 @@ bool UOffAxisLocalPlayer::OffAxisLineTraceByChannel(
 	OffAxisDeprojectScreenToWorld(UGameplayStatics::GetPlayerController(WorldContextObject, 0), WorldPosition, WorldDirection);
 	FVector end = WorldPosition + _LengthOfRay * WorldDirection;
 
+
+
 	if (bDrawDebugLine)
 	{
 		DrawDebugLine(WorldContextObject->GetWorld(), _eyeRelativePositioninUE4Coord, end, _color, bPersistentLines, _lifeTime, _depthPriority, _thickness);
 
-		UE_LOG(OffAxisLog, Log, TEXT("Start: %s"), *_eyeRelativePosition.ToString());
-		UE_LOG(OffAxisLog, Log, TEXT("End  : %s"), *end.ToString());
+		//UE_LOG(OffAxisLog, Log, TEXT("Start: %s"), *_eyeRelativePosition.ToString());
+		//UE_LOG(OffAxisLog, Log, TEXT("End  : %s"), *end.ToString());
 		
-		GEngine->AddOnScreenDebugMessage(300, 10, FColor::Cyan, FString::Printf(TEXT("Start: %s"), *_eyeRelativePosition.ToString()));
-		GEngine->AddOnScreenDebugMessage(310, 10, FColor::Cyan, FString::Printf(TEXT("End: %s"), *end.ToString()));
+		GEngine->AddOnScreenDebugMessage(301, 10, FColor::Cyan, FString::Printf(TEXT("Start: %s"), *_eyeRelativePosition.ToString()));
+		GEngine->AddOnScreenDebugMessage(302, 10, FColor::Cyan, FString::Printf(TEXT("End: %s"), *end.ToString()));
 	}
 	
 	//do raytrace
