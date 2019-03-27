@@ -369,7 +369,6 @@ bool UOffAxisLocalPlayer::OffAxisDeprojectScreenToWorld_Internal(
 		}
 
 		FMatrix t = s_ProjectionMatrix; 
-		ProjectionData.ProjectionMatrix = t;
 				
 		t = FTranslationMatrix(-ProjectionData.ViewOrigin) * ProjectionData.ViewRotationMatrix * t;
 			
