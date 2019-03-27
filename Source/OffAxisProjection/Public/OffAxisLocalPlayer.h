@@ -143,6 +143,8 @@ static FVector pc = FVector(1.f, 1.f, 0.f);
 static FVector pe = FVector::ZeroVector;
 
 static FMatrix s_ProjectionMatrix = FMatrix();
+static FMatrix s_ProjectionMatrix_right = FMatrix();
+static FMatrix s_ProjectionMatrix_left = FMatrix();
 
 static FVector EyeOffsetVector = FVector::ZeroVector;
 
