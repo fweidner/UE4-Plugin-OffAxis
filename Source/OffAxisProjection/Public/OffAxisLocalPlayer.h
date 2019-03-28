@@ -33,7 +33,7 @@ public:
 
 	FMatrix GenerateOffAxisMatrix(FVector _eyeRelativePositon, EStereoscopicPass _PassType);
 
-	FMatrix GenerateOffAxisMatrix_Internal_Slow(FVector _eyeRelativePositon);
+	FMatrix GenerateOffAxisMatrix_Internal(FVector _eyeRelativePositon);
 	FMatrix GenerateOffAxisMatrix_Internal_Test(FVector _eyeRelativePositon);
 	
 	FMatrix FrustumMatrix(float left, float right, float bottom, float top, float nearVal, float farVal);
@@ -108,6 +108,9 @@ public:
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "OffAxisIs3DEnabled", Keywords = "OffAxis Is 3D Enabled"), Category = "OffAxisProjection")
 		static bool Is3DEnabled();
 
+
+	static FVector OffAxisToUE(FVector _OffAxisVector);
+
 private: 
 	FMatrix mOffAxisMatrix = FMatrix();
 	float OffAxisFarPlane = 10000.f;
@@ -156,3 +159,4 @@ static FVector EyeOffsetVector = FVector::ZeroVector;
 
 //////////////////////////////////////////////////////////////////////////
 
+static FVector s_currentAdjustedViewLocation = FVector::ZeroVector;
