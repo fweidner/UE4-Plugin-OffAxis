@@ -87,7 +87,7 @@ public:
 	//////////////////////////////////////////////////////////////////////////
 
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "OffAxisDeprojectScreenToWorld", Keywords = "OffAxis DeprojectScreenToWorld"), Category = "OffAxisProjection")
-		static bool OffAxisDeprojectScreenToWorld_Internal(APlayerController const* Player, FVector2D& _screenPosition, FVector& WorldPosition, FVector& WorldDirection);
+		static bool OffAxisDeprojectScreenToWorld_Internal(APlayerController const* Player, FVector2D& _screenPosition, FVector2D& _viewportsize, FVector& WorldPosition, FVector& WorldDirection);
 
 	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject", DisplayName = "OffAxisLineTraceByChannel", AdvancedDisplay = "_color,bPersistentLines,_lifeTime,_depthPriority,_thickness,_LengthOfRay", Keywords = " OffAxis LineTraceByChannel"), Category = "OffAxisProjection")
 		static bool OffAxisLineTraceByChannel(
@@ -105,13 +105,18 @@ public:
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "OffAxisSetPx", Keywords = "OffAxis SetPx"), Category = "OffAxisProjection")
 		static void SetPx(bool _setpa, FVector _pa , bool _setpb, FVector _pb, bool _setpc, FVector _pc);
 
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "OffAxisIs3DEnabled", Keywords = "OffAxis Is 3D Enabled"), Category = "OffAxisProjection")
+		static bool Is3DEnabled();
+
 private: 
 	FMatrix mOffAxisMatrix = FMatrix();
 	float OffAxisFarPlane = 10000.f;
 	float OffAxisNearPlane = .1f;
+
 	
 };
 
+static bool s_Is3D = false;
 //////////////////////////////////////////////////////////////////////////
 static float s_ProjectionPlaneOffset = 0.f;
 static float s_EyeOffsetVal = 3.200001f;
@@ -141,6 +146,7 @@ static FVector pb = FVector(1.f, -1.f, 0.f);
 static FVector pc = FVector(1.f, 1.f, 0.f);
 static FVector pe = FVector::ZeroVector;
 
+//////////////////////////////////////////////////////////////////////////
 static FMatrix s_ProjectionMatrix = FMatrix();
 static FMatrix s_ProjectionMatrix_right = FMatrix();
 static FMatrix s_ProjectionMatrix_left = FMatrix();

@@ -84,7 +84,7 @@ void UOffAxisLocalPlayer::UpdateProjectionMatrix_Internal(FSceneView* View, FMat
 	View->UpdateViewMatrix();
 
 	FMatrix tmpMat = axisChanger * stereoProjectionMatrix;
-	
+
 	View->ProjectionMatrixUnadjustedForRHI = View->ViewMatrices.GetViewMatrix().Inverse() * tmpMat;
 
 	View->UpdateProjectionMatrix(View->ViewMatrices.GetViewMatrix().Inverse() * tmpMat);
@@ -107,7 +107,7 @@ void UOffAxisLocalPlayer::UpdateProjectionMatrix_Internal(FSceneView* View, FMat
 		s_ProjectionMatrix = View->ViewMatrices.GetProjectionMatrix();
 		break;
 	}
-	
+
 }
 
 void UOffAxisLocalPlayer::InitOffAxisProjection_Fast(float _screenWidth, float _screenHeight)
@@ -206,11 +206,11 @@ FMatrix UOffAxisLocalPlayer::GenerateOffAxisMatrix_Internal_Test(FVector _eyeRel
 }
 
 FMatrix UOffAxisLocalPlayer::GenerateOffAxisMatrix(FVector _eyeRelativePosition, EStereoscopicPass _PassType)
-{	
-//	GEngine->AddOnScreenDebugMessage(0, 0, FColor::Black, FString::Printf(TEXT("Feyeoffsetvector: %s"), *eyeoffsetvector.ToString()));
-//	GEngine->AddOnScreenDebugMessage(0, 0, FColor::Black, FString::Printf(TEXT("s_ViewRotation: %s"), *s_ViewRotation.ToString()));
-//	GEngine->AddOnScreenDebugMessage(48, 0, FColor::Black, FString::Printf(TEXT("s_ViewRotation: %s"), ));
-	 
+{
+	//	GEngine->AddOnScreenDebugMessage(0, 0, FColor::Black, FString::Printf(TEXT("Feyeoffsetvector: %s"), *eyeoffsetvector.ToString()));
+	//	GEngine->AddOnScreenDebugMessage(0, 0, FColor::Black, FString::Printf(TEXT("s_ViewRotation: %s"), *s_ViewRotation.ToString()));
+	//	GEngine->AddOnScreenDebugMessage(48, 0, FColor::Black, FString::Printf(TEXT("s_ViewRotation: %s"), ));
+
 	FVector adjustedEyePositionForS3D = _eyeRelativePosition + EyeOffsetVector;
 
 	switch (s_OffAxisMethod)
@@ -358,23 +358,25 @@ void UOffAxisLocalPlayer::SetPx(bool _setpa, FVector _pa, bool _setpb, FVector _
 /************************************************************************/
 
 bool UOffAxisLocalPlayer::OffAxisDeprojectScreenToWorld_Internal(
-	APlayerController const* player, 
-	FVector2D& _screenPosition, 
-	FVector& WorldPosition, 
+	APlayerController const* Player,
+	FVector2D& _screenPosition,
+	FVector2D& _viewportsize,
+	FVector& WorldPosition,
 	FVector& WorldDirection)
 {
 	//////////////////////////////////////////////////////////////////////////
 
-	ULocalPlayer* const LP = player ? player->GetLocalPlayer() : nullptr;
-		
+	ULocalPlayer* const LP = Player ? Player->GetLocalPlayer() : nullptr;
+
 	if (LP && LP->ViewportClient)
 	{
 		// get the projection data and projection matrix
 		FMatrix eyeProjectionMatrix;
-		FSceneViewProjectionData ProjectionData; 
+		FSceneViewProjectionData ProjectionData;
+	
 		if (Is3DEnabled())
 		{
-			if (_screenPosition.X < 640)
+			if (_screenPosition.X < _viewportsize.X/2)
 			{
 				LP->GetProjectionData(LP->ViewportClient->Viewport, eSSP_LEFT_EYE, /*out*/ ProjectionData);
 				eyeProjectionMatrix = s_ProjectionMatrix_left;
@@ -392,10 +394,11 @@ bool UOffAxisLocalPlayer::OffAxisDeprojectScreenToWorld_Internal(
 		}
 		//GEngine->AddOnScreenDebugMessage(312, 10, FColor::Cyan, FString::Printf(TEXT("ViewOrigin: %s"), *(ProjectionData.ViewOrigin).ToString()));
 
-		
+		//calculate deprojection matrix
 		FMatrix t = FTranslationMatrix(-ProjectionData.ViewOrigin) * ProjectionData.ViewRotationMatrix * eyeProjectionMatrix;
 		FMatrix const InvViewProjMatrix = t.Inverse();
 
+		//Use unreals deproject function.
 		FSceneView::DeprojectScreenToWorld(_screenPosition, ProjectionData.GetConstrainedViewRect(), InvViewProjMatrix, /*out*/ WorldPosition, /*out*/ WorldDirection);
 		return true;
 	}
@@ -403,21 +406,22 @@ bool UOffAxisLocalPlayer::OffAxisDeprojectScreenToWorld_Internal(
 	// something went wrong, zero things and return false
 	WorldPosition = FVector::ZeroVector;
 	WorldDirection = FVector::ZeroVector;
+	GEngine->AddOnScreenDebugMessage(312, 10, FColor::Red, FString::Printf(TEXT("Error: Deprojection failed for picking!")));
 	return false;
 }
 
 
 
 bool UOffAxisLocalPlayer::OffAxisLineTraceByChannel(
-	UObject* WorldContextObject, 
-	/*out*/ struct FHitResult& OutHit, 
+	UObject* WorldContextObject,
+	/*out*/ struct FHitResult& OutHit,
 	FVector _eyeRelativePosition,
-	bool bDrawDebugLine, 
-	FColor _color, 
-	bool bPersistentLines /*= false*/, 
-	float _lifeTime /*= 10.f*/, 
+	bool bDrawDebugLine,
+	FColor _color,
+	bool bPersistentLines /*= false*/,
+	float _lifeTime /*= 10.f*/,
 	uint8 _depthPriority /*= 0*/,
-	float _thickness /*= 1.f*/,	
+	float _thickness /*= 1.f*/,
 	float _LengthOfRay /*= 1000.f*/)
 {
 
@@ -429,14 +433,17 @@ bool UOffAxisLocalPlayer::OffAxisLineTraceByChannel(
 	player->GetMousePosition(x, y);
 	FVector2D screenPosition = FVector2D(x, y);
 
+	//get resolution
+	FVector2D viewportsize;
+	GEngine->GameViewport->GetViewportSize(/*out */ viewportsize);
+
 	//Correct eye offset
 	FVector tmpEyeRelativePosition = _eyeRelativePosition;
 	if (Is3DEnabled())
 	{
+		if (x <= viewportsize.X/2)
 		{
-			x <= 640)
-		{
-		tmpEyeRelativePosition += EyeOffsetVector;
+			tmpEyeRelativePosition += EyeOffsetVector;
 		}
 		else
 		{
@@ -449,9 +456,9 @@ bool UOffAxisLocalPlayer::OffAxisLineTraceByChannel(
 
 	//get end position for ray trace
 	FVector WorldPosition, WorldDirection;
-	OffAxisDeprojectScreenToWorld_Internal(player, screenPosition, WorldPosition, WorldDirection);
+	OffAxisDeprojectScreenToWorld_Internal(player, screenPosition, viewportsize, WorldPosition, WorldDirection);
 	FVector end = WorldPosition + _LengthOfRay * WorldDirection;
-	
+
 	//draw debug line
 	if (bDrawDebugLine)
 	{
@@ -459,36 +466,37 @@ bool UOffAxisLocalPlayer::OffAxisLineTraceByChannel(
 
 		//UE_LOG(OffAxisLog, Log, TEXT("Start: %s"), *_eyeRelativePosition.ToString());
 		//UE_LOG(OffAxisLog, Log, TEXT("End  : %s"), *end.ToString());
-		
+
 		GEngine->AddOnScreenDebugMessage(301, 10, FColor::Cyan, FString::Printf(TEXT("Start: %s"), *_eyeRelativePositioninUE4Coord.ToString()));
 		GEngine->AddOnScreenDebugMessage(302, 10, FColor::Cyan, FString::Printf(TEXT("End  : %s"), *end.ToString()));
 	}
-	
+
 	//do raytrace
 	return WorldContextObject->GetWorld()->LineTraceSingleByChannel(OutHit, _eyeRelativePositioninUE4Coord, end, ECollisionChannel::ECC_Visibility);
 
 }
 
-bool ULocalPlayer::Is3DEnabled() 
+bool UOffAxisLocalPlayer::Is3DEnabled()
 {
+
 	switch (CurrentPassType)
 	{
 	case eSSP_FULL:
-		return false;
+		s_Is3D = false;
 		break;
 	case eSSP_LEFT_EYE:
-		return true;
+		s_Is3D = true;
 		break;
 	case eSSP_RIGHT_EYE:
-		return true;
+		s_Is3D = true;
 		break;
 	case eSSP_MONOSCOPIC_EYE:
-		return false;
+		s_Is3D = false;
 		break;
 	default:
+		s_Is3D = false;
 		break;
-
 	}
-
+	return s_Is3D;
 }
 
