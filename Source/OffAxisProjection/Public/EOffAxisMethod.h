@@ -12,7 +12,6 @@
 UENUM()
 enum EOffAxisMethod
 {
-	Fast		UMETA(DisplayName = "Fast"),
 	Slow		UMETA(DisplayName = "Slow"),
 	Test		UMETA(DisplayName = "Test"),
 };
