@@ -82,12 +82,12 @@ public:
 		static float ResetProjectionPlaneOffsetForStereo(float _newVal);
 
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "ResetEyeOffsetForStereo", Keywords = "OffAxisProjection eye offset eyeoffset reset "), Category = "OffAxisProjection")
-		static float ResetEyeOffsetForStereo(float _newVal = 3.200001);
+		static float ResetEyeOffsetForStereo(float _newVal = 3.200001f);
 
 	//////////////////////////////////////////////////////////////////////////
 
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "OffAxisDeprojectScreenToWorld", Keywords = "OffAxis DeprojectScreenToWorld"), Category = "OffAxisProjection")
-		static bool OffAxisDeprojectScreenToWorld(APlayerController const* Player, const FVector2D& ScreenPosition, FVector& WorldPosition, FVector& WorldDirection);
+		static bool OffAxisDeprojectScreenToWorld_Internal(APlayerController const* Player, FVector2D& _screenPosition, FVector2D& _viewportsize, FVector& WorldPosition, FVector& WorldDirection);
 
 	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject", DisplayName = "OffAxisLineTraceByChannel", AdvancedDisplay = "_color,bPersistentLines,_lifeTime,_depthPriority,_thickness,_LengthOfRay", Keywords = " OffAxis LineTraceByChannel"), Category = "OffAxisProjection")
 		static bool OffAxisLineTraceByChannel(
@@ -102,21 +102,24 @@ public:
 			float _thickness = 1.f, 
 			float _LengthOfRay = 1000.f);
 
-	static bool OffAxisDeprojectScreenToWorld(APlayerController const* Player, FVector& WorldPosition, FVector& WorldDirection);
-
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "OffAxisSetPx", Keywords = "OffAxis SetPx"), Category = "OffAxisProjection")
 		static void SetPx(bool _setpa, FVector _pa , bool _setpb, FVector _pb, bool _setpc, FVector _pc);
+
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "OffAxisIs3DEnabled", Keywords = "OffAxis Is 3D Enabled"), Category = "OffAxisProjection")
+		static bool Is3DEnabled();
 
 private: 
 	FMatrix mOffAxisMatrix = FMatrix();
 	float OffAxisFarPlane = 10000.f;
 	float OffAxisNearPlane = .1f;
+
 	
 };
 
+static bool s_Is3D = false;
 //////////////////////////////////////////////////////////////////////////
 static float s_ProjectionPlaneOffset = 0.f;
-static float s_EyeOffsetVal = 3.2f;
+static float s_EyeOffsetVal = 3.200001f;
 
 //////////////////////////////////////////////////////////////////////////
 static bool s_ShowDebugMessages = false;
@@ -141,8 +144,15 @@ static FMatrix s_Frustum;
 static FVector pa = FVector(-1.f, -1.f, 0.f);
 static FVector pb = FVector(1.f, -1.f, 0.f);
 static FVector pc = FVector(1.f, 1.f, 0.f);
-static FVector pe = FVector(0.f, 0.f, 0.f);
-
-static FMatrix s_ProjectionMatrix = FMatrix();
+static FVector pe = FVector::ZeroVector;
 
 //////////////////////////////////////////////////////////////////////////
+static FMatrix s_ProjectionMatrix = FMatrix();
+static FMatrix s_ProjectionMatrix_right = FMatrix();
+static FMatrix s_ProjectionMatrix_left = FMatrix();
+static EStereoscopicPass CurrentPassType;
+
+static FVector EyeOffsetVector = FVector::ZeroVector;
+
+//////////////////////////////////////////////////////////////////////////
+
