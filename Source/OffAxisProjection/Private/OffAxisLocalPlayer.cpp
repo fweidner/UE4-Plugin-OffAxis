@@ -478,17 +478,11 @@ bool UOffAxisLocalPlayer::Is3DEnabled()
 
 	switch (CurrentPassType)
 	{
-	case eSSP_FULL:
-		s_Is3D = false;
-		break;
 	case eSSP_LEFT_EYE:
 		s_Is3D = true;
 		break;
 	case eSSP_RIGHT_EYE:
 		s_Is3D = true;
-		break;
-	case eSSP_MONOSCOPIC_EYE:
-		s_Is3D = false;
 		break;
 	default:
 		s_Is3D = false;
