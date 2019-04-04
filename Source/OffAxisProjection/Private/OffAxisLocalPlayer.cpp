@@ -47,15 +47,17 @@ FMatrix UOffAxisLocalPlayer::FrustumMatrix(float left, float right, float bottom
 void UOffAxisLocalPlayer::UpdateProjectionMatrix_Internal(FSceneView* View, FMatrix OffAxisMatrix, EStereoscopicPass _Pass)
 {
 	FMatrix stereoProjectionMatrix = OffAxisMatrix;
-	CurrentPassType = _Pass;
+	s_CurrentPassType = _Pass;
 
 	switch (_Pass)
 	{
 	case eSSP_LEFT_EYE:
 		stereoProjectionMatrix = FTranslationMatrix(FVector(s_ProjectionPlaneOffset, 0.f, 0.f)) * OffAxisMatrix;
+		
 		break;
 	case eSSP_RIGHT_EYE:
 		stereoProjectionMatrix = FTranslationMatrix(FVector(-s_ProjectionPlaneOffset, 0.f, 0.f)) * OffAxisMatrix;
+		
 		break;
 	default:
 		break;
@@ -80,10 +82,14 @@ void UOffAxisLocalPlayer::UpdateProjectionMatrix_Internal(FSceneView* View, FMat
 	switch (_Pass)
 	{
 	case eSSP_LEFT_EYE:
+		GEngine->AddOnScreenDebugMessage(72, 2, FColor::Black, FString::Printf(TEXT("l\n: %s\n"), *View->ViewMatrices.GetProjectionMatrix().ToString()));
+		GEngine->AddOnScreenDebugMessage(73, 2, FColor::Black, FString::Printf(TEXT("l\n: %s\n"), *View->ViewLocation.ToString()));
 		s_ProjectionMatrix_left = View->ViewMatrices.GetProjectionMatrix();
 		break;
 	case eSSP_RIGHT_EYE:
 		s_ProjectionMatrix_right = View->ViewMatrices.GetProjectionMatrix();
+		GEngine->AddOnScreenDebugMessage(74, 2, FColor::Black, FString::Printf(TEXT("r\n: %s \n"), *View->ViewMatrices.GetProjectionMatrix().ToString()));
+		GEngine->AddOnScreenDebugMessage(75, 2, FColor::Black, FString::Printf(TEXT("l\n: %s\n"), *View->ViewLocation.ToString()));
 		break;
 	default:
 		s_ProjectionMatrix = View->ViewMatrices.GetProjectionMatrix();
@@ -91,25 +97,11 @@ void UOffAxisLocalPlayer::UpdateProjectionMatrix_Internal(FSceneView* View, FMat
 	}
 }
 
-void UOffAxisLocalPlayer::InitOffAxisProjection_Fast(float _screenWidth, float _screenHeight)
-{
-	s_TopLeftCorner = pc;// FVector(-_screenWidth / 2.f, -_screenHeight / 2.f, GNearClippingPlane);
-	s_BottomRightCorner = pb; FVector(_screenWidth / 2.f, _screenHeight / 2.f, GNearClippingPlane);
-
-
-	FMatrix Frustum;
-	Frustum.SetIdentity();
-	Frustum.M[2][2] = -(GFarClippingPlane + GNearClippingPlane) / (GFarClippingPlane - GNearClippingPlane);
-	Frustum.M[2][3] = -1.0f;
-	Frustum.M[3][2] = -(2.f*GFarClippingPlane * GNearClippingPlane) / (GFarClippingPlane - GNearClippingPlane);
-	Frustum.M[3][3] = 0.0f;
-}
-
-FMatrix UOffAxisLocalPlayer::GenerateOffAxisMatrix_Internal(FVector _eyeRelativePositon)
+FMatrix UOffAxisLocalPlayer::GenerateOffAxisMatrix_Internal(FVector _eyeRelativePosition)
 {
 	FMatrix result;
 
-	FVector eyePosition = _eyeRelativePositon;
+	FVector eyePosition = _eyeRelativePosition;
 
 	float l, r, b, t, n, f, nd;
 
@@ -189,11 +181,14 @@ FMatrix UOffAxisLocalPlayer::GenerateOffAxisMatrix_Internal_Test(FVector _eyeRel
 FMatrix UOffAxisLocalPlayer::GenerateOffAxisMatrix(FVector _eyeRelativePosition, EStereoscopicPass _PassType)
 {
 	EyeOffsetVector = FVector::ZeroVector;
-	EyeOffsetVector.X= s_EyeOffsetVal;
+	EyeOffsetVector.X = s_EyeOffsetVal;	//no
+	//EyeOffsetVector.Y = s_EyeOffsetVal;		//yes
+	//EyeOffsetVector.Z = s_EyeOffsetVal;
 	
 	s_currentAdjustedViewLocation = _eyeRelativePosition;
 	if (Is3DEnabled())
 	{
+		GEngine->AddOnScreenDebugMessage(459, 0, FColor::Cyan, FString::Printf(TEXT("3D")));
 		if (_PassType == eSSP_LEFT_EYE)
 		{
 			s_currentAdjustedViewLocation -= EyeOffsetVector;
@@ -506,3 +501,4 @@ FVector UOffAxisLocalPlayer::OffAxisToUE(FVector _OffAxisVector)
 
 	return uEVector;
 }
+

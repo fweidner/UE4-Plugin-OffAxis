@@ -41,9 +41,6 @@ public:
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "PrintCurrentOffAxisVersion", Keywords = "OffAxisProjection print"), Category = "OffAxisProjection")
 		static FText GetOffAxisEnumValueAsString(EOffAxisMethod _val);
 
-	UFUNCTION(BlueprintCallable, meta = (DisplayName = "InitOffAxisProjection", Keywords = "OffAxisProjection init"), Category = "OffAxisProjection")
-		static void InitOffAxisProjection_Fast(float _screenWidth, float _screenHeight);
-
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UpdateEyeRelativePosition", Keywords = "OffAxisProjection update relative eye position "), Category = "OffAxisProjection")
 		static FVector UpdateEyeRelativePosition(FVector _eyeRelativePosition);
 
@@ -153,7 +150,7 @@ static FVector pe = FVector::ZeroVector;
 static FMatrix s_ProjectionMatrix = FMatrix();
 static FMatrix s_ProjectionMatrix_right = FMatrix();
 static FMatrix s_ProjectionMatrix_left = FMatrix();
-static EStereoscopicPass CurrentPassType;
+static EStereoscopicPass s_CurrentPassType;
 
 static FVector EyeOffsetVector = FVector::ZeroVector;
 
