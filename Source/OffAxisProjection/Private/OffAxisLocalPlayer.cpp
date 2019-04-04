@@ -73,10 +73,11 @@ void UOffAxisLocalPlayer::UpdateProjectionMatrix_Internal(FSceneView* View, FMat
 	axisChanger.M[2][1] = 1.0f;
 
 	View->ViewRotation = s_ViewRotation;
-
-	View->UpdateViewMatrix();
+	
 	FMatrix tmpMat = axisChanger * stereoProjectionMatrix;
-	View->ProjectionMatrixUnadjustedForRHI = View->ViewMatrices.GetViewMatrix().Inverse() * tmpMat;
+	View->UpdateViewMatrix();
+	
+//	View->ProjectionMatrixUnadjustedForRHI = View->ViewMatrices.GetViewMatrix().Inverse() * tmpMat;
 	View->UpdateProjectionMatrix(View->ViewMatrices.GetViewMatrix().Inverse() * tmpMat);
 	
 	switch (_Pass)
@@ -84,12 +85,14 @@ void UOffAxisLocalPlayer::UpdateProjectionMatrix_Internal(FSceneView* View, FMat
 	case eSSP_LEFT_EYE:
 		GEngine->AddOnScreenDebugMessage(72, 2, FColor::Black, FString::Printf(TEXT("l\n: %s\n"), *View->ViewMatrices.GetProjectionMatrix().ToString()));
 		GEngine->AddOnScreenDebugMessage(73, 2, FColor::Black, FString::Printf(TEXT("l\n: %s\n"), *View->ViewLocation.ToString()));
+		GEngine->AddOnScreenDebugMessage(74, 2, FColor::Black, FString::Printf(TEXT("l\n: %s\n"), *View->ViewRotation.ToString()));
 		s_ProjectionMatrix_left = View->ViewMatrices.GetProjectionMatrix();
 		break;
 	case eSSP_RIGHT_EYE:
 		s_ProjectionMatrix_right = View->ViewMatrices.GetProjectionMatrix();
-		GEngine->AddOnScreenDebugMessage(74, 2, FColor::Black, FString::Printf(TEXT("r\n: %s \n"), *View->ViewMatrices.GetProjectionMatrix().ToString()));
-		GEngine->AddOnScreenDebugMessage(75, 2, FColor::Black, FString::Printf(TEXT("l\n: %s\n"), *View->ViewLocation.ToString()));
+		GEngine->AddOnScreenDebugMessage(75, 2, FColor::Black, FString::Printf(TEXT("r\n: %s \n"), *View->ViewMatrices.GetProjectionMatrix().ToString()));
+		GEngine->AddOnScreenDebugMessage(76, 2, FColor::Black, FString::Printf(TEXT("l\n: %s\n"), *View->ViewLocation.ToString()));
+		GEngine->AddOnScreenDebugMessage(77, 2, FColor::Black, FString::Printf(TEXT("l\n: %s\n"), *View->ViewRotation.ToString()));
 		break;
 	default:
 		s_ProjectionMatrix = View->ViewMatrices.GetProjectionMatrix();
@@ -471,7 +474,7 @@ bool UOffAxisLocalPlayer::OffAxisLineTraceByChannel(
 bool UOffAxisLocalPlayer::Is3DEnabled()
 {
 
-	switch (CurrentPassType)
+	switch (s_CurrentPassType)
 	{
 	case eSSP_LEFT_EYE:
 		s_Is3D = true;
