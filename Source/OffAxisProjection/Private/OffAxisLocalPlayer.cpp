@@ -190,7 +190,8 @@ FMatrix UOffAxisLocalPlayer::GenerateOffAxisMatrix_Internal_Test(FVector _eyeRel
 FMatrix UOffAxisLocalPlayer::GenerateOffAxisMatrix(FVector _eyeRelativePosition, EStereoscopicPass _PassType)
 {
 	EyeOffsetVector = FVector::ZeroVector;
-	EyeOffsetVector.X = s_EyeOffsetVal;	//no
+	EyeOffsetVector = s_tmpVec;
+	//EyeOffsetVector.X = s_EyeOffsetVal;	//no
 	//EyeOffsetVector.Y = s_EyeOffsetVal;		//yes
 	//EyeOffsetVector.Z = s_EyeOffsetVal;
 	
