@@ -3,55 +3,24 @@
 ![OffAxisExample](https://github.com/fweidner/UE4-Plugin-OffAxis/blob/master/2018-06-13.gif)
 
 ## Current version
-Works with 4.21 :)
+Works with 4.22 :)
 
 ## General info: 
-It works. But it is experimental :)
+It works. But it is (always) experimental :)
 
-* The button ResetPx restores the orignal position of the three extent points.
-* The checkboxes Y, P, and R allow unlock the yaw, pitch, and roll axis for custom roations. After you have rotated your view, press SetOA to set your new OffAxisWindow.
-* Picking is possible. The 
-
-http://nttl.ru/en
-
-https://perspectiveresources.blogspot.de/2013/04/i3d-head-coupled-perspective.html
-
-http://iihm.imag.fr/en/demo/hcpmobile/
-
-https://www.youtube.com/watch?v=hvrT7FqpPQE
-
-https://www.youtube.com/watch?v=-foNLFnrNRc
-
-https://www.youtube.com/watch?v=PP38yj3zdqo
-
-https://www.youtube.com/watch?v=5ibPBGCAWKo
-
-http://csc.lsu.edu/~kooima/articles/genperspective/
-
-Michael Deering. 1992. High resolution virtual reality. ACM SIGGRAPH Computer Graphics 26, 2: 195–202. https://doi.org/10.1145/142920.134039
-
-## Based on...
-https://answers.unrealengine.com/questions/65003/howto-modify-the-projection-matrix.html
+* OffAxisProjection / FishTank VR
+* in 2D Mode: OffAxisActor can be placed arbitrarily.
+* in 3D Mode: OffAxisActor can be placed parallel to the Z-Y-Plane and rotated using pitch and roll.
 
 ## How to use:
 Assuming you start with a Basic Code C++ project:
 - Update LocalPlayer class in Edit->Project Settings->General Settings 
 - Adjust Input mappings to your Config/DefaultInput.ini
 - Drag the OffAxisActor in your scene
-- Set position of OffAxisActor to 0,0,0: This is what you see.
+- Set position of OffAxisActor to 0,0,0
+- In the OffAxisActor, place the child actors P_a, P_b, and P_c so that the correspond to the corners of your "virtual window".
 - Change your NearClippingPlane .1f 
 
-### Some explanations...
-The OffAxisActor comes with three cubes that specify the extents of the "fishtank".
-
-When you select the OffAxisActor in the World Outliner, There are new categories: "None", "Tracking Optitrack", and "SteamVR". You can specify the tracking device (None uses keyboard input. Optitrack should work with my Optitrack plugin. SteamVR is just a wrapper and does nothing at the moment)
-* None-Tracking
-** ...
-* Tracking Optitrack
-** You can specify the coordinates OptiX, OptiY, OptiZ (basically the origin of the Optitrack coordinate system)
-** The variable "Head Name" specifies the name of the tracking target in Motive that represents the head.
-* SteamVR
-** just a wrapper. Does nothing.
 ## Input Mappings
 Restart after updating DefaultInput.ini!
 
@@ -91,6 +60,24 @@ Restart after updating DefaultInput.ini!
 +AxisMappings=(AxisName="Pick_down",Scale=-0.100000,Key=E)
 DefaultTouchInterface=/Engine/MobileResources/HUD/DefaultVirtualJoysticks.DefaultVirtualJoysticks
 
-## Tips
-* Show > Advanced > Camera Frustums
-* Works with "-emulatestereo"
+## Based on...
+
+http://nttl.ru/en
+
+https://perspectiveresources.blogspot.de/2013/04/i3d-head-coupled-perspective.html
+
+http://iihm.imag.fr/en/demo/hcpmobile/
+
+https://www.youtube.com/watch?v=hvrT7FqpPQE
+
+https://www.youtube.com/watch?v=-foNLFnrNRc
+
+https://www.youtube.com/watch?v=PP38yj3zdqo
+
+https://www.youtube.com/watch?v=5ibPBGCAWKo
+
+http://csc.lsu.edu/~kooima/articles/genperspective/
+
+Michael Deering. 1992. High resolution virtual reality. ACM SIGGRAPH Computer Graphics 26, 2: 195–202. https://doi.org/10.1145/142920.134039
+
+https://answers.unrealengine.com/questions/65003/howto-modify-the-projection-matrix.html
