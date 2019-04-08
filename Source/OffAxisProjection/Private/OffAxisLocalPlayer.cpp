@@ -47,7 +47,7 @@ FMatrix UOffAxisLocalPlayer::FrustumMatrix(float left, float right, float bottom
 void UOffAxisLocalPlayer::UpdateProjectionMatrix_Internal(FSceneView* View, FMatrix OffAxisMatrix, EStereoscopicPass _Pass)
 {
 	FMatrix stereoProjectionMatrix = OffAxisMatrix;
-	CurrentPassType = _Pass;
+	s_CurrentPassType = _Pass;
 
 	switch (_Pass)
 	{
@@ -71,19 +71,30 @@ void UOffAxisLocalPlayer::UpdateProjectionMatrix_Internal(FSceneView* View, FMat
 	axisChanger.M[2][1] = 1.0f;
 
 	View->ViewRotation = s_ViewRotation;
+	FMatrix tmpMat = axisChanger * stereoProjectionMatrix;
 
 	View->UpdateViewMatrix();
-	FMatrix tmpMat = axisChanger * stereoProjectionMatrix;
-	View->ProjectionMatrixUnadjustedForRHI = View->ViewMatrices.GetViewMatrix().Inverse() * tmpMat;
 	View->UpdateProjectionMatrix(View->ViewMatrices.GetViewMatrix().Inverse() * tmpMat);
 	
 	switch (_Pass)
 	{
 	case eSSP_LEFT_EYE:
+		if (s_ShowDebugMessages)
+		{
+			//GEngine->AddOnScreenDebugMessage(72, 2, FColor::Black, FString::Printf(TEXT("l\n: %s\n"), *View->ViewMatrices.GetProjectionMatrix().ToString()));
+			GEngine->AddOnScreenDebugMessage(73, 2, FColor::Black, FString::Printf(TEXT("l\n: %s\n"), *View->ViewLocation.ToString()));
+			//GEngine->AddOnScreenDebugMessage(74, 2, FColor::Black, FString::Printf(TEXT("l\n: %s\n"), *View->ViewRotation.ToString()));
+		}
 		s_ProjectionMatrix_left = View->ViewMatrices.GetProjectionMatrix();
 		break;
 	case eSSP_RIGHT_EYE:
 		s_ProjectionMatrix_right = View->ViewMatrices.GetProjectionMatrix();
+		if (s_ShowDebugMessages)
+		{
+			//GEngine->AddOnScreenDebugMessage(75, 2, FColor::Black, FString::Printf(TEXT("r\n: %s \n"), *View->ViewMatrices.GetProjectionMatrix().ToString()));
+			GEngine->AddOnScreenDebugMessage(76, 2, FColor::Black, FString::Printf(TEXT("l\n: %s\n"), *View->ViewLocation.ToString()));
+			//GEngine->AddOnScreenDebugMessage(77, 2, FColor::Black, FString::Printf(TEXT("l\n: %s\n"), *View->ViewRotation.ToString()));
+		}
 		break;
 	default:
 		s_ProjectionMatrix = View->ViewMatrices.GetProjectionMatrix();
@@ -91,38 +102,20 @@ void UOffAxisLocalPlayer::UpdateProjectionMatrix_Internal(FSceneView* View, FMat
 	}
 }
 
-void UOffAxisLocalPlayer::InitOffAxisProjection_Fast(float _screenWidth, float _screenHeight)
-{
-	s_TopLeftCorner = pc;// FVector(-_screenWidth / 2.f, -_screenHeight / 2.f, GNearClippingPlane);
-	s_BottomRightCorner = pb; FVector(_screenWidth / 2.f, _screenHeight / 2.f, GNearClippingPlane);
-
-
-	FMatrix Frustum;
-	Frustum.SetIdentity();
-	Frustum.M[2][2] = -(GFarClippingPlane + GNearClippingPlane) / (GFarClippingPlane - GNearClippingPlane);
-	Frustum.M[2][3] = -1.0f;
-	Frustum.M[3][2] = -(2.f*GFarClippingPlane * GNearClippingPlane) / (GFarClippingPlane - GNearClippingPlane);
-	Frustum.M[3][3] = 0.0f;
-}
-
-FMatrix UOffAxisLocalPlayer::GenerateOffAxisMatrix_Internal(FVector _eyeRelativePositon)
+FMatrix UOffAxisLocalPlayer::GenerateOffAxisMatrix_Internal(FVector _eyeRelativePosition)
 {
 	FMatrix result;
-
-	FVector eyePosition = _eyeRelativePositon;
-
+	
 	float l, r, b, t, n, f, nd;
 
 	n = GNearClippingPlane;
 	f = GFarClippingPlane;
 
 	//this is analog to: http://csc.lsu.edu/~kooima/articles/genperspective/
-
 	//Careful: coordinate system! y-up, x-right (UE4 uses inverted LHS)
 
 	//pa = lower left, pb = lower right, pc = upper left, eye pos
-
-	pe = FVector(eyePosition.X, eyePosition.Y, eyePosition.Z);
+	FVector pe = FVector(_eyeRelativePosition.X, _eyeRelativePosition.Y, _eyeRelativePosition.Z);
 
 	// Compute the screen corner vectors.
 	FVector va, vb, vc;
@@ -156,20 +149,22 @@ FMatrix UOffAxisLocalPlayer::GenerateOffAxisMatrix_Internal(FVector _eyeRelative
 
 	if (s_ShowDebugMessages)
 	{
-		GEngine->AddOnScreenDebugMessage(10, 2, FColor::Orange, FString::Printf(TEXT("pa: %s"), *pa.ToString()));
-		GEngine->AddOnScreenDebugMessage(20, 2, FColor::Orange, FString::Printf(TEXT("pb: %s"), *pb.ToString()));
-		GEngine->AddOnScreenDebugMessage(31, 2, FColor::Orange, FString::Printf(TEXT("pc: %s"), *pc.ToString()));
-		GEngine->AddOnScreenDebugMessage(40, 2, FColor::Orange, FString::Printf(TEXT("pe: %s"), *pe.ToString()));
-		// 		GEngine->AddOnScreenDebugMessage(50, 2, FColor::Black, FString::Printf(TEXT("vr: %s"), *vu.ToString()));
-		// 		GEngine->AddOnScreenDebugMessage(60, 2, FColor::Black, FString::Printf(TEXT("vu: %s"), *vr.ToString()));
-		// 		GEngine->AddOnScreenDebugMessage(70, 2, FColor::Black, FString::Printf(TEXT("vn: %s"), *vn.ToString()));
-		//		GEngine->AddOnScreenDebugMessage(80, 4, FColor::Red, FString::Printf(TEXT("Frustum: %f \t %f \t %f \t %f \t %f \t %f \t "), l, r, b, t, n, f));
-		GEngine->AddOnScreenDebugMessage(90, 2, FColor::Orange, FString::Printf(TEXT("Eye-Screen-Distance: %f"), d));
-		GEngine->AddOnScreenDebugMessage(100, 4, FColor::Orange, FString::Printf(TEXT("nd: %f"), nd));
+		GEngine->AddOnScreenDebugMessage(1, 2, FColor::Orange, FString::Printf(TEXT("pa: %s"), *pa.ToString()));
+		GEngine->AddOnScreenDebugMessage(2, 2, FColor::Orange, FString::Printf(TEXT("pb: %s"), *pb.ToString()));
+		GEngine->AddOnScreenDebugMessage(3, 2, FColor::Orange, FString::Printf(TEXT("pc: %s"), *pc.ToString()));
+		GEngine->AddOnScreenDebugMessage(4, 2, FColor::Orange, FString::Printf(TEXT("pe: %s"), *pe.ToString()));
+		// 		GEngine->AddOnScreenDebugMessage(5, 2, FColor::Black, FString::Printf(TEXT("vr: %s"), *vu.ToString()));
+		// 		GEngine->AddOnScreenDebugMessage(6, 2, FColor::Black, FString::Printf(TEXT("vu: %s"), *vr.ToString()));
+		// 		GEngine->AddOnScreenDebugMessage(7, 2, FColor::Black, FString::Printf(TEXT("vn: %s"), *vn.ToString()));
+		//		GEngine->AddOnScreenDebugMessage(8, 4, FColor::Red, FString::Printf(TEXT("Frustum: %f \t %f \t %f \t %f \t %f \t %f \t "), l, r, b, t, n, f));
+		GEngine->AddOnScreenDebugMessage(9, 2, FColor::Orange, FString::Printf(TEXT("Eye-Screen-Distance: %f"), d));
+		GEngine->AddOnScreenDebugMessage(10, 4, FColor::Orange, FString::Printf(TEXT("nd: %f"), nd));
 	}
 
+
+
 	//Move the apex of the frustum to the origin.
-	result = FTranslationMatrix(-eyePosition) * result;
+	result = FTranslationMatrix(-pe) * result;
 
 	//scales matrix for UE4 and RHI
 	result *= 1.0f / result.M[0][0];
@@ -188,8 +183,12 @@ FMatrix UOffAxisLocalPlayer::GenerateOffAxisMatrix_Internal_Test(FVector _eyeRel
 
 FMatrix UOffAxisLocalPlayer::GenerateOffAxisMatrix(FVector _eyeRelativePosition, EStereoscopicPass _PassType)
 {
+	s_CurrentPassType = _PassType;
 	EyeOffsetVector = FVector::ZeroVector;
-	EyeOffsetVector.X= s_EyeOffsetVal;
+	//EyeOffsetVector = s_tmpVec;
+	EyeOffsetVector.X = s_EyeOffsetVal;	//no
+	//EyeOffsetVector.Y = s_EyeOffsetVal;		//yes
+	//EyeOffsetVector.Z = s_EyeOffsetVal;
 	
 	s_currentAdjustedViewLocation = _eyeRelativePosition;
 	if (Is3DEnabled())
@@ -312,7 +311,7 @@ float UOffAxisLocalPlayer::UpdateProjectionPlaneOffsetForStereo(float _newVal)
 {
 	s_ProjectionPlaneOffset += _newVal;
 	if (s_ShowDebugMessages)
-		GEngine->AddOnScreenDebugMessage(55, 2, FColor::Cyan, FString::Printf(TEXT("ProjectionPlaneOffset: %f"), s_ProjectionPlaneOffset));
+		GEngine->AddOnScreenDebugMessage(55, 2, FColor::Cyan, FString::Printf(TEXT("s_ProjectionPlaneOffset: %f"), s_ProjectionPlaneOffset));
 	return s_ProjectionPlaneOffset;
 }
 
@@ -476,7 +475,7 @@ bool UOffAxisLocalPlayer::OffAxisLineTraceByChannel(
 bool UOffAxisLocalPlayer::Is3DEnabled()
 {
 
-	switch (CurrentPassType)
+	switch (s_CurrentPassType)
 	{
 	case eSSP_LEFT_EYE:
 		s_Is3D = true;
@@ -506,3 +505,4 @@ FVector UOffAxisLocalPlayer::OffAxisToUE(FVector _OffAxisVector)
 
 	return uEVector;
 }
+
