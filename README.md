@@ -6,8 +6,11 @@
 Works with 4.21 :)
 
 ## General info: 
+It works. But it is experimental :)
 
-
+* The button ResetPx restores the orignal position of the three extent points.
+* The checkboxes Y, P, and R allow unlock the yaw, pitch, and roll axis for custom roations. After you have rotated your view, press SetOA to set your new OffAxisWindow.
+* Picking is possible. The 
 
 http://nttl.ru/en
 
@@ -38,23 +41,22 @@ Assuming you start with a Basic Code C++ project:
 - Set position of OffAxisActor to 0,0,0: This is what you see.
 - Change your NearClippingPlane .1f 
 
-### Ok, here's the catch...
-The cube of the OffAxisActor does not specifiy the extents of the position of your FishTank Virtual Reality. It specifies just the height and width. Currently, the origin of the FishTankVR/OffAxisProjection is always at (0,0,0) with the size of width/height specified by the cube ExtentPoint.
-
 ### Some explanations...
-When you select the OffAxisActor in the World Outliner, There are two new categories: "OffAxis" and "Tracking Optitrack".
-* "OffAxis", 
-** You can specify the tracking device (None uses keyboard input. Optitrack works with my Optitrack plugin. SteamVR is just a wrapper and does nothing at the moment)
-** You can set the default player start position. That specifies the position where the Unreal Engine camera is located on startup.
-* "Tracking Optitrack",
-** You can specify the coordinates OptiX, OptiY, OptiZ. They specify the the start position of the player with respect to the virtual screen (in the default version: 2.8m in front of the screen and 1.2m above the ground). They also form the variable OptiTransform. Basically: (OptiX,OptiY,OptiZ) shifts the origin of the tracking system to the origin of the UE4 application. If you need additional shifts to have relative transforms, ReferenceTransformTwo does another shift.
-** The variable "Head Name" specifies the name of the tracking target in Motive that represents the head.
+The OffAxisActor comes with three cubes that specify the extents of the "fishtank".
 
+When you select the OffAxisActor in the World Outliner, There are new categories: "None", "Tracking Optitrack", and "SteamVR". You can specify the tracking device (None uses keyboard input. Optitrack should work with my Optitrack plugin. SteamVR is just a wrapper and does nothing at the moment)
+* None-Tracking
+** ...
+* Tracking Optitrack
+** You can specify the coordinates OptiX, OptiY, OptiZ (basically the origin of the Optitrack coordinate system)
+** The variable "Head Name" specifies the name of the tracking target in Motive that represents the head.
+* SteamVR
+** just a wrapper. Does nothing.
 ## Input Mappings
 Restart after updating DefaultInput.ini!
 
 +ActionMappings=(ActionName="HomePosReset",bShift=False,bCtrl=False,bAlt=False,bCmd=False,Key=End)
-+ActionMappings=(ActionName="ToggleOffAxisMethod",bShift=False,bCtrl=False,bAlt=False,bCmd=False,Key=SpaceBar)
++ActionMappings=(ActionName="ToggleOffAxisMethod",bShift=False,bCtrl=False,bAlt=False,bCmd=False,Key=Y)
 +ActionMappings=(ActionName="ResetEyeOffset",bShift=False,bCtrl=False,bAlt=False,bCmd=False,Key=Three)
 +ActionMappings=(ActionName="StartOptitrack",bShift=False,bCtrl=False,bAlt=False,bCmd=False,Key=Four)
 +ActionMappings=(ActionName="UseOptitrack",bShift=False,bCtrl=False,bAlt=False,bCmd=False,Key=Eight)
@@ -64,20 +66,30 @@ Restart after updating DefaultInput.ini!
 +ActionMappings=(ActionName="ConnectToOptitrack",bShift=False,bCtrl=False,bAlt=False,bCmd=False,Key=I)
 +ActionMappings=(ActionName="UseSteamVR",bShift=False,bCtrl=False,bAlt=False,bCmd=False,Key=Nine)
 +ActionMappings=(ActionName="UseNoneTracking",bShift=False,bCtrl=False,bAlt=False,bCmd=False,Key=Zero)
-+AxisMappings=(AxisName="Up",Scale=1.500000,Key=Up)
-+AxisMappings=(AxisName="Up",Scale=-1.500000,Key=Down)
-+AxisMappings=(AxisName="Left",Scale=-1.500000,Key=Left)
-+AxisMappings=(AxisName="Left",Scale=1.500000,Key=Right)
-+AxisMappings=(AxisName="Forward",Scale=1.000000,Key=PageUp)
-+AxisMappings=(AxisName="Forward",Scale=-1.000000,Key=PageDown)
++ActionMappings=(ActionName="Select",bShift=False,bCtrl=False,bAlt=False,bCmd=False,Key=LeftMouseButton)
++ActionMappings=(ActionName="ResetPickableObjects",bShift=False,bCtrl=False,bAlt=False,bCmd=False,Key=None)
++AxisMappings=(AxisName="EyeUp",Scale=1.500000,Key=Up)
++AxisMappings=(AxisName="EyeUp",Scale=-1.500000,Key=Down)
++AxisMappings=(AxisName="EyeLeft",Scale=-1.500000,Key=Left)
++AxisMappings=(AxisName="EyeLeft",Scale=1.500000,Key=Right)
++AxisMappings=(AxisName="EyeForward",Scale=1.000000,Key=PageUp)
++AxisMappings=(AxisName="EyeForward",Scale=-1.000000,Key=PageDown)
 +AxisMappings=(AxisName="ChangeEyeOffset",Scale=0.100000,Key=One)
 +AxisMappings=(AxisName="ChangeEyeOffset",Scale=-0.100000,Key=Two)
-+AxisMappings=(AxisName="TmpZUp",Scale=0.500000,Key=W)
-+AxisMappings=(AxisName="TmpZUp",Scale=-0.500000,Key=S)
-+AxisMappings=(AxisName="Forward",Scale=0.100000,Key=NumPadEight)
-+AxisMappings=(AxisName="Forward",Scale=-0.100000,Key=NumPadTwo)
++AxisMappings=(AxisName="EyeForward",Scale=0.100000,Key=NumPadEight)
++AxisMappings=(AxisName="EyeForward",Scale=-0.100000,Key=NumPadTwo)
 +AxisMappings=(AxisName="ChangeProjectionPlaneOffset",Scale=0.100000,Key=Five)
 +AxisMappings=(AxisName="ChangeProjectionPlaneOffset",Scale=-0.100000,Key=Six)
++AxisMappings=(AxisName="MouseX",Scale=1.000000,Key=MouseX)
++AxisMappings=(AxisName="MouseY",Scale=1.000000,Key=MouseY)
++AxisMappings=(AxisName="Wheel",Scale=1.000000,Key=MouseWheelAxis)
++AxisMappings=(AxisName="Pick_away",Scale=0.100000,Key=W)
++AxisMappings=(AxisName="Pick_left",Scale=-0.100000,Key=A)
++AxisMappings=(AxisName="Pick_down",Scale=0.100000,Key=Q)
++AxisMappings=(AxisName="Pick_away",Scale=-0.100000,Key=S)
++AxisMappings=(AxisName="Pick_left",Scale=0.100000,Key=D)
++AxisMappings=(AxisName="Pick_down",Scale=-0.100000,Key=E)
+DefaultTouchInterface=/Engine/MobileResources/HUD/DefaultVirtualJoysticks.DefaultVirtualJoysticks
 
 ## Tips
 * Show > Advanced > Camera Frustums

@@ -31,34 +31,20 @@ public:
 
 	void UpdateProjectionMatrix_Internal(FSceneView * View, FMatrix OffAxisMatrix, EStereoscopicPass _Pass);
 
-	FMatrix GenerateOffAxisMatrix(float _screenWidth, float _screenHeight, FVector _eyeRelativePositon, EStereoscopicPass _PassType);
+	FMatrix GenerateOffAxisMatrix(FVector _eyeRelativePositon, EStereoscopicPass _PassType);
 
-	FMatrix GenerateOffAxisMatrix_Internal_Slow(float _screenWidth, float _screenHeight, FVector _eyeRelativePositon);
-	FMatrix GenerateOffAxisMatrix_Internal_Fast(FVector _eyeRelativePositon);
-	FMatrix GenerateOffAxisMatrix_Internal_Test(float _screenWidth, float _screenHeight, FVector _eyeRelativePositon);
-
-
+	FMatrix GenerateOffAxisMatrix_Internal(FVector _eyeRelativePositon);
+	FMatrix GenerateOffAxisMatrix_Internal_Test(FVector _eyeRelativePositon);
+	
 	FMatrix FrustumMatrix(float left, float right, float bottom, float top, float nearVal, float farVal);
-
-
-
 
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "PrintCurrentOffAxisVersion", Keywords = "OffAxisProjection print"), Category = "OffAxisProjection")
 		static FText GetOffAxisEnumValueAsString(EOffAxisMethod _val);
 
-	UFUNCTION(BlueprintCallable, meta = (DisplayName = "InitOffAxisProjection", Keywords = "OffAxisProjection init"), Category = "OffAxisProjection")
-		static void InitOffAxisProjection_Fast(float _screenWidth, float _screenHeight);
-
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UpdateEyeRelativePosition", Keywords = "OffAxisProjection update relative eye position "), Category = "OffAxisProjection")
 		static FVector UpdateEyeRelativePosition(FVector _eyeRelativePosition);
 
-	UFUNCTION(BlueprintCallable, meta = (DisplayName = "SetWidth", Keywords = "OffAxisProjection width "), Category = "OffAxisProjection")
-		static float SetWidth(float _width);
-
-	UFUNCTION(BlueprintCallable, meta = (DisplayName = "SetHeight", Keywords = "OffAxisProjection height "), Category = "OffAxisProjection")
-		static float SetHeight(float _height);
-
-	UFUNCTION(BlueprintCallable, meta = (DisplayName = "ToggleOffAxisMethod", Keywords = "OffAxisProjection toggle method "), Category = "OffAxisProjection")
+ 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "ToggleOffAxisMethod", Keywords = "OffAxisProjection toggle method "), Category = "OffAxisProjection")
 		static EOffAxisMethod ToggleOffAxisMethod();
 
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "PrintCurrentOffAxisVersion", Keywords = "OffAxisProjection print"), Category = "OffAxisProjection")
@@ -73,7 +59,9 @@ public:
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UpdateTmpRotator", Keywords = "OffAxisProjection tmp update"), Category = "OffAxisProjection")
 		static FRotator UpdateTmpRotator(FRotator _newVal);
 
-
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "AddTmpRotaterOffset", Keywords = "OffAxisProjection tmp add offset"), Category = "OffAxisProjection")
+		static FRotator AddTmpRotaterOffset(FRotator _offset);
+	
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UpdateShowDebugMessages", Keywords = "OffAxisProjection show debug "), Category = "OffAxisProjection")
 		static bool UpdateShowDebugMessages(bool _newVal);
 
@@ -91,15 +79,12 @@ public:
 		static float ResetProjectionPlaneOffsetForStereo(float _newVal);
 
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "ResetEyeOffsetForStereo", Keywords = "OffAxisProjection eye offset eyeoffset reset "), Category = "OffAxisProjection")
-		static float ResetEyeOffsetForStereo(float _newVal = 3.200001);
+		static float ResetEyeOffsetForStereo(float _newVal = 3.200001f);
 
 	//////////////////////////////////////////////////////////////////////////
 
-	UFUNCTION(BlueprintCallable, meta = (DisplayName = "SetTest1", Keywords = "OffAxisProjection SetTest1"), Category = "OffAxisProjection")
-		static int SetTest1(int _newVal);
-
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "OffAxisDeprojectScreenToWorld", Keywords = "OffAxis DeprojectScreenToWorld"), Category = "OffAxisProjection")
-		static bool OffAxisDeprojectScreenToWorld(APlayerController const* Player, const FVector2D& ScreenPosition, FVector& WorldPosition, FVector& WorldDirection);
+		static bool OffAxisDeprojectScreenToWorld_Internal(APlayerController const* Player, FVector2D& _screenPosition, FVector2D& _viewportsize, FVector& WorldPosition, FVector& WorldDirection);
 
 	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject", DisplayName = "OffAxisLineTraceByChannel", AdvancedDisplay = "_color,bPersistentLines,_lifeTime,_depthPriority,_thickness,_LengthOfRay", Keywords = " OffAxis LineTraceByChannel"), Category = "OffAxisProjection")
 		static bool OffAxisLineTraceByChannel(
@@ -114,36 +99,39 @@ public:
 			float _thickness = 1.f, 
 			float _LengthOfRay = 1000.f);
 
-	static bool OffAxisDeprojectScreenToWorld(APlayerController const* Player, FVector& WorldPosition, FVector& WorldDirection);
-
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "OffAxisSetPx", Keywords = "OffAxis SetPx"), Category = "OffAxisProjection")
 		static void SetPx(bool _setpa, FVector _pa , bool _setpb, FVector _pb, bool _setpc, FVector _pc);
+
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "OffAxisIs3DEnabled", Keywords = "OffAxis Is 3D Enabled"), Category = "OffAxisProjection")
+		static bool Is3DEnabled();
+
+
+	static FVector OffAxisToUE(FVector _OffAxisVector);
 
 private: 
 	FMatrix mOffAxisMatrix = FMatrix();
 	float OffAxisFarPlane = 10000.f;
 	float OffAxisNearPlane = .1f;
+
 	
 };
 
+static bool s_Is3D = false;
 //////////////////////////////////////////////////////////////////////////
 static float s_ProjectionPlaneOffset = 0.f;
-static float s_EyeOffsetVal = 3.2f;
+static float s_EyeOffsetVal = 3.200001f;
 
 //////////////////////////////////////////////////////////////////////////
 static bool s_ShowDebugMessages = false;
 
 static FVector s_tmpVec = FVector();
-static FRotator s_tmpRot = FRotator();
+static FRotator s_ViewRotation = FRotator();
 
 //////////////////////////////////////////////////////////////////////////
 static FVector s_EyePosition = FVector();
 static bool s_bUseoffAxis = false;
 
-static EOffAxisMethod s_OffAxisMethod = EOffAxisMethod::Fast;
-
-static float s_Width = 0.f;
-static float s_Height = 0.f;
+static EOffAxisMethod s_OffAxisMethod = EOffAxisMethod::Slow;
 
 static FVector s_TopLeftCorner = FVector();
 static FVector s_BottomRightCorner = FVector();
@@ -153,16 +141,19 @@ static float GFarClippingPlane = 10000.f;
 static FMatrix s_Frustum;
 
 //////////////////////////////////////////////////////////////////////////
-static int s_test1 = 0;
-static int s_test2 = 0;
-
-
-//////////////////////////////////////////////////////////////////////////
 static FVector pa = FVector(-1.f, -1.f, 0.f);
 static FVector pb = FVector(1.f, -1.f, 0.f);
 static FVector pc = FVector(1.f, 1.f, 0.f);
-static FVector pe = FVector(0.f, 0.f, 0.f);
-
-static FMatrix s_ProjectionMatrix = FMatrix();
+static FVector pe = FVector::ZeroVector;
 
 //////////////////////////////////////////////////////////////////////////
+static FMatrix s_ProjectionMatrix = FMatrix();
+static FMatrix s_ProjectionMatrix_right = FMatrix();
+static FMatrix s_ProjectionMatrix_left = FMatrix();
+static EStereoscopicPass s_CurrentPassType;
+
+static FVector EyeOffsetVector = FVector::ZeroVector;
+
+//////////////////////////////////////////////////////////////////////////
+
+static FVector s_currentAdjustedViewLocation = FVector::ZeroVector;

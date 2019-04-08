@@ -40,7 +40,7 @@ public class OffAxisProjection : ModuleRules
 			{
 				"CoreUObject",
 				"Engine",
-			    "ShaderCore",
+			    "RenderCore",
                 "HeadMountedDisplay",        
                 "RHI",
                 "RenderCore",
