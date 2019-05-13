@@ -30,9 +30,8 @@ class UOffAxisProjectionBPLibrary : public UBlueprintFunctionLibrary
 {
 	GENERATED_UCLASS_BODY()
 
-	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Execute Sample function", Keywords = "OffAxisProjection sample test testing"), Category = "OffAxisProjectionTesting")
+		UFUNCTION(BlueprintCallable, meta = (DisplayName = "Execute Sample function", Keywords = "OffAxisProjection sample test testing"), Category = "OffAxisProjection")
 		static float OffAxisProjectionSampleFunction(float Param);
-
 
 
 };

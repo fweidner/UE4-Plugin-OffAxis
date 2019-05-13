@@ -292,7 +292,7 @@ void UOffAxisLocalPlayer::PrintCurrentOffAxisVersion()
 EOffAxisMethod UOffAxisLocalPlayer::SetOffAxisMethod(EOffAxisMethod _newMethod, bool _bShouldPrintLogMessage)
 {
 	s_OffAxisMethod = _newMethod;
-	if (_bShouldPrintLogMessage)
+	if (s_ShowDebugMessages)
 		PrintCurrentOffAxisVersion();
 	return s_OffAxisMethod;
 }
