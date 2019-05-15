@@ -115,7 +115,7 @@ FMatrix UOffAxisLocalPlayer::GenerateOffAxisMatrix_Internal(FVector _eyeRelative
 	//Careful: coordinate system! y-up, x-right (UE4 uses inverted LHS)
 
 	//pa = lower left, pb = lower right, pc = upper left, eye pos
-	FVector pe = FVector(_eyeRelativePosition.X, _eyeRelativePosition.Y, _eyeRelativePosition.Z);
+	pe = FVector(_eyeRelativePosition.X, _eyeRelativePosition.Y, _eyeRelativePosition.Z);
 
 	// Compute the screen corner vectors.
 	FVector va, vb, vc;
@@ -292,7 +292,7 @@ void UOffAxisLocalPlayer::PrintCurrentOffAxisVersion()
 EOffAxisMethod UOffAxisLocalPlayer::SetOffAxisMethod(EOffAxisMethod _newMethod, bool _bShouldPrintLogMessage)
 {
 	s_OffAxisMethod = _newMethod;
-	if (_bShouldPrintLogMessage)
+	if (s_ShowDebugMessages)
 		PrintCurrentOffAxisVersion();
 	return s_OffAxisMethod;
 }
