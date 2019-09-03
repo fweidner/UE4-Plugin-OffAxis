@@ -20,9 +20,12 @@ FSceneView * UOffAxisLocalPlayer::CalcSceneView(FSceneViewFamily * ViewFamily, F
 	}
 
 	double end = FPlatformTime::Seconds();
+	
+	if (s_ShowDebugMessages)
+	{
+		GEngine->AddOnScreenDebugMessage(0, 1, FColor::Red, FString::Printf(TEXT("TimeToOffAxis in: %f s."), end - start));
+	}
 
-	//if (s_ShowDebugMessages)
-	//	GEngine->AddOnScreenDebugMessage(0, 1, FColor::Red, FString::Printf(TEXT("TimeToOffAxis in: %f s."), end - start));
 
 	return tmp;
 }
