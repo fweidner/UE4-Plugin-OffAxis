@@ -26,9 +26,7 @@ Assuming you start with a Basic Code C++ project:
 * Here are the current input mappings the plugin supports/uses. Just copy and paste this bunch in your DefaultInput.ini and restart after updating DefaultInput.ini!
 * For some inputs, you might need to change the key if they are already in use in your project.
 
-+ActionMappings=(ActionName="TryToConnectToServer",bShift=True,bCtrl=False,bAlt=False,bCmd=False,Key=One)
-+ActionMappings=(ActionName="ConnectToOptitrack",bShift=True,bCtrl=False,bAlt=False,bCmd=False,Key=Y)
-
+### OffAxis
 +ActionMappings=(ActionName="HomePosReset",bShift=True,bCtrl=False,bAlt=False,bCmd=False,Key=Home)
 +ActionMappings=(ActionName="ResetEyeOffset",bShift=True,bCtrl=False,bAlt=False,bCmd=False,Key=Nine)
 +ActionMappings=(ActionName="ResetProjectionPlaneOffset",bShift=True,bCtrl=False,bAlt=False,bCmd=False,Key=Six)
@@ -61,6 +59,10 @@ Assuming you start with a Basic Code C++ project:
 +AxisMappings=(AxisName="Towards",Scale=-0.100000,Key=O)
 +AxisMappings=(AxisName="ChangeEyeOffset",Scale=0.001000,Key=Seven)
 +AxisMappings=(AxisName="ChangeEyeOffset",Scale=-0.010000,Key=Eight)
+
+### Optitrack related:
++ActionMappings=(ActionName="TryToConnectToServer",bShift=True,bCtrl=False,bAlt=False,bCmd=False,Key=One)
++ActionMappings=(ActionName="ConnectToOptitrack",bShift=True,bCtrl=False,bAlt=False,bCmd=False,Key=Y)
 
 ## Based on...
 
