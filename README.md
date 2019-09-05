@@ -9,9 +9,9 @@ Works with 4.23 :)
 It works. But it is (always) experimental :)
 
 * OffAxisProjection / FishTank VR
-** in 2D Mode: OffAxisActor can be placed arbitrarily.
-** in 3D Mode: OffAxisActor can be placed parallel to the Z-Y-Plane and rotated using pitch and roll.
-* Also shows one possibility of how to modify the projection matrix. 
+  * in 2D Mode: OffAxisActor can be placed arbitrarily.
+  * in 3D Mode: OffAxisActor can be translated in x,y, z and rotated using pitch and roll.
+* Also shows a possibility of how to modify the projection matrix. 
 
 ## How to use:
 Assuming you start with a Basic Code C++ project:
@@ -23,43 +23,44 @@ Assuming you start with a Basic Code C++ project:
 - Change your NearClippingPlane .1f 
 
 ## Input Mappings
-Restart after updating DefaultInput.ini!
+* Here are the current input mappings the plugin supports/uses. Just copy and paste this bunch in your DefaultInput.ini and restart after updating DefaultInput.ini!
+* For some inputs, you might need to change the key if they are already in use in your project.
 
-+ActionMappings=(ActionName="HomePosReset",bShift=False,bCtrl=False,bAlt=False,bCmd=False,Key=End)
-+ActionMappings=(ActionName="ToggleOffAxisMethod",bShift=False,bCtrl=False,bAlt=False,bCmd=False,Key=Y)
-+ActionMappings=(ActionName="ResetEyeOffset",bShift=False,bCtrl=False,bAlt=False,bCmd=False,Key=Three)
-+ActionMappings=(ActionName="StartOptitrack",bShift=False,bCtrl=False,bAlt=False,bCmd=False,Key=Four)
-+ActionMappings=(ActionName="UseOptitrack",bShift=False,bCtrl=False,bAlt=False,bCmd=False,Key=Eight)
-+ActionMappings=(ActionName="ToggleUseOffAxis",bShift=False,bCtrl=False,bAlt=False,bCmd=False,Key=P)
-+ActionMappings=(ActionName="ResetProjectionPlaneOffset",bShift=False,bCtrl=False,bAlt=False,bCmd=False,Key=Seven)
-+ActionMappings=(ActionName="Quit",bShift=False,bCtrl=False,bAlt=False,bCmd=False,Key=Escape)
-+ActionMappings=(ActionName="ConnectToOptitrack",bShift=False,bCtrl=False,bAlt=False,bCmd=False,Key=I)
-+ActionMappings=(ActionName="UseSteamVR",bShift=False,bCtrl=False,bAlt=False,bCmd=False,Key=Nine)
-+ActionMappings=(ActionName="UseNoneTracking",bShift=False,bCtrl=False,bAlt=False,bCmd=False,Key=Zero)
-+ActionMappings=(ActionName="Select",bShift=False,bCtrl=False,bAlt=False,bCmd=False,Key=LeftMouseButton)
-+ActionMappings=(ActionName="ResetPickableObjects",bShift=False,bCtrl=False,bAlt=False,bCmd=False,Key=None)
++ActionMappings=(ActionName="TryToConnectToServer",bShift=True,bCtrl=False,bAlt=False,bCmd=False,Key=One)
++ActionMappings=(ActionName="ConnectToOptitrack",bShift=True,bCtrl=False,bAlt=False,bCmd=False,Key=Y)
+
++ActionMappings=(ActionName="HomePosReset",bShift=True,bCtrl=False,bAlt=False,bCmd=False,Key=Home)
++ActionMappings=(ActionName="ResetEyeOffset",bShift=True,bCtrl=False,bAlt=False,bCmd=False,Key=Nine)
++ActionMappings=(ActionName="ResetProjectionPlaneOffset",bShift=True,bCtrl=False,bAlt=False,bCmd=False,Key=Six)
++ActionMappings=(ActionName="ToggleShowDebugMessages",bShift=True,bCtrl=False,bAlt=False,bCmd=False,Key=V)
++ActionMappings=(ActionName="ToggleUseOffAxis",bShift=True,bCtrl=False,bAlt=False,bCmd=False,Key=P)
++ActionMappings=(ActionName="Pick",bShift=False,bCtrl=False,bAlt=False,bCmd=False,Key=LeftMouseButton)
++ActionMappings=(ActionName="ToggleVisOffAxisMenu",bShift=False,bCtrl=False,bAlt=False,bCmd=False,Key=F9)
 +AxisMappings=(AxisName="EyeUp",Scale=1.500000,Key=Up)
 +AxisMappings=(AxisName="EyeUp",Scale=-1.500000,Key=Down)
 +AxisMappings=(AxisName="EyeLeft",Scale=-1.500000,Key=Left)
 +AxisMappings=(AxisName="EyeLeft",Scale=1.500000,Key=Right)
 +AxisMappings=(AxisName="EyeForward",Scale=1.000000,Key=PageUp)
 +AxisMappings=(AxisName="EyeForward",Scale=-1.000000,Key=PageDown)
-+AxisMappings=(AxisName="ChangeEyeOffset",Scale=0.100000,Key=One)
-+AxisMappings=(AxisName="ChangeEyeOffset",Scale=-0.100000,Key=Two)
-+AxisMappings=(AxisName="EyeForward",Scale=0.100000,Key=NumPadEight)
-+AxisMappings=(AxisName="EyeForward",Scale=-0.100000,Key=NumPadTwo)
-+AxisMappings=(AxisName="ChangeProjectionPlaneOffset",Scale=0.100000,Key=Five)
-+AxisMappings=(AxisName="ChangeProjectionPlaneOffset",Scale=-0.100000,Key=Six)
-+AxisMappings=(AxisName="MouseX",Scale=1.000000,Key=MouseX)
-+AxisMappings=(AxisName="MouseY",Scale=1.000000,Key=MouseY)
-+AxisMappings=(AxisName="Wheel",Scale=1.000000,Key=MouseWheelAxis)
 +AxisMappings=(AxisName="Pick_away",Scale=0.100000,Key=W)
 +AxisMappings=(AxisName="Pick_left",Scale=-0.100000,Key=A)
 +AxisMappings=(AxisName="Pick_down",Scale=0.100000,Key=Q)
 +AxisMappings=(AxisName="Pick_away",Scale=-0.100000,Key=S)
 +AxisMappings=(AxisName="Pick_left",Scale=0.100000,Key=D)
 +AxisMappings=(AxisName="Pick_down",Scale=-0.100000,Key=E)
-DefaultTouchInterface=/Engine/MobileResources/HUD/DefaultVirtualJoysticks.DefaultVirtualJoysticks
++AxisMappings=(AxisName="Wheel",Scale=1.000000,Key=MouseWheelAxis)
++AxisMappings=(AxisName="MouseX",Scale=1.000000,Key=MouseX)
++AxisMappings=(AxisName="MouseY",Scale=1.000000,Key=MouseY)
++AxisMappings=(AxisName="ChangeProjectionPlaneOffset",Scale=0.100000,Key=Five)
++AxisMappings=(AxisName="ChangeProjectionPlaneOffset",Scale=-0.100000,Key=Six)
++AxisMappings=(AxisName="MoveUp",Scale=0.100000,Key=I)
++AxisMappings=(AxisName="MoveDown",Scale=-0.100000,Key=K)
++AxisMappings=(AxisName="MoveLeft",Scale=-0.100000,Key=J)
++AxisMappings=(AxisName="MoveRight",Scale=0.100000,Key=L)
++AxisMappings=(AxisName="Away",Scale=0.100000,Key=U)
++AxisMappings=(AxisName="Towards",Scale=-0.100000,Key=O)
++AxisMappings=(AxisName="ChangeEyeOffset",Scale=0.001000,Key=Seven)
++AxisMappings=(AxisName="ChangeEyeOffset",Scale=-0.010000,Key=Eight)
 
 ## Based on...
 
