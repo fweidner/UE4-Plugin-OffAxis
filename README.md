@@ -14,13 +14,19 @@ It works. But it is (always) experimental :)
 * Also shows a possibility of how to modify the projection matrix. 
 
 ## How to use:
-Assuming you start with a Basic Code C++ project:
+Assuming you start with a new project:
+- If your project is a C++ project, you are good to go. If you have a pure blueprint project, add a random C++ class via File -> Add C++ class (empty class is fine).
+- Copy the Plugin in your (you might need to create a Plugin folder in the directory where your uproject file is).
+- Start (or restart) Unreal Engine. You might get a warning that the plugin needs to be rebuild. That's normal.
 - Update LocalPlayer class in Edit->Project Settings->General Settings 
-- Adjust Input mappings to your Config/DefaultInput.ini
+- Adjust Input mappings to your Config/DefaultInput.ini (just copy the below mappins to your Config/DefaultInput.ini. If you don't have one, create a random new mapping in Settings --> Project Settings --> Input. Then the file should be there. Then copy the mappings. Restart UE4.
 - Drag the OffAxisActor in your scene
 - Set position of OffAxisActor to 0,0,0
 - In the OffAxisActor, place the child actors P_a, P_b, and P_c so that the correspond to the corners of your "virtual window".
-- Change your NearClippingPlane .1f 
+- Change your NearClippingPlane .1f (Settings --> Project Settings --> Engine --> General Settings --> Near Clip Plane)
+- Select the OffAxisActor in your Project Outliner: set "Use Off Axis on Start" to true and change "Tracking Device" to None (the Set Tracking Device Setting is still in early stages).
+- Hit play. If it is not working now, close UE4, right-click on your uproject file and regenerate Visual Studio Project Files, try again :)
+- If it starts but the screen is black, try to either move the STartPositionEye of the OffAxisActor along X or (if you have copied the input mappings) play around with pageUp and pageDown.
 
 ## Input Mappings
 * Here are the current input mappings the plugin supports/uses. Just copy and paste this bunch in your DefaultInput.ini and restart after updating DefaultInput.ini!
