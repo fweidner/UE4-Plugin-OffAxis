@@ -8,15 +8,16 @@
 #include "Runtime/Core/Public/GenericPlatform/GenericPlatformTime.h" // for FPlatformTime
 #include "Runtime/Engine/Classes/Engine/GameViewportClient.h" //for ViewportClient
 
-FSceneView * UOffAxisLocalPlayer::CalcSceneView(FSceneViewFamily * ViewFamily, FVector & OutViewLocation, FRotator & OutViewRotation, FViewport * Viewport, FViewElementDrawer * ViewDrawer, EStereoscopicPass StereoPass)
+FSceneView * UOffAxisLocalPlayer::CalcSceneView(FSceneViewFamily * ViewFamily, FVector & OutViewLocation, FRotator & OutViewRotation, FViewport * Viewport, FViewElementDrawer * ViewDrawer, int32 StereoViewIndex)
 {
 	double start = FPlatformTime::Seconds();
 
-	FSceneView* tmp = ULocalPlayer::CalcSceneView(ViewFamily, OutViewLocation, OutViewRotation, Viewport, ViewDrawer, StereoPass);
+	FSceneView* tmp = ULocalPlayer::CalcSceneView(ViewFamily, OutViewLocation, OutViewRotation, Viewport, ViewDrawer, StereoViewIndex);
 
 	if (s_bUseoffAxis && tmp)
 	{
-		UpdateProjectionMatrix_Internal(tmp, GenerateOffAxisMatrix(s_EyePosition, StereoPass), StereoPass);
+		EStereoscopicEye stereoPass = GetEyeFromStereoIndex(StereoViewIndex);
+		UpdateProjectionMatrix_Internal(tmp, GenerateOffAxisMatrix(s_EyePosition, stereoPass), stereoPass);
 	}
 
 	double end = FPlatformTime::Seconds();
@@ -28,6 +29,40 @@ FSceneView * UOffAxisLocalPlayer::CalcSceneView(FSceneViewFamily * ViewFamily, F
 
 
 	return tmp;
+}
+
+EStereoscopicEye UOffAxisLocalPlayer::GetEyeFromStereoIndex(const int32 StereoViewIndex)
+{
+	switch (StereoViewIndex)
+	{
+		case 0:
+			return EStereoscopicEye::eSSE_LEFT_EYE;
+		case 1:
+			return EStereoscopicEye::eSSE_RIGHT_EYE;
+		case 2:
+			return EStereoscopicEye::eSSE_LEFT_EYE_SIDE;
+		case 3:
+			return EStereoscopicEye::eSSE_RIGHT_EYE_SIDE;
+		default:
+			return EStereoscopicEye::eSSE_MONOSCOPIC;
+	}
+}
+
+int32 UOffAxisLocalPlayer::GetStereoIndexFromEye(const EStereoscopicEye eye)
+{
+	switch (eye)
+	{
+		case EStereoscopicEye::eSSE_LEFT_EYE:
+			return 0;
+		case EStereoscopicEye::eSSE_RIGHT_EYE:
+			return 1;
+		case EStereoscopicEye::eSSE_LEFT_EYE_SIDE:
+			return 2;
+		case EStereoscopicEye::eSSE_RIGHT_EYE_SIDE:
+			return 3;
+		default:
+			return -1; // INDEX_NONE
+	}
 }
 
 FMatrix UOffAxisLocalPlayer::FrustumMatrix(float left, float right, float bottom, float top, float nearVal, float farVal)
@@ -47,17 +82,17 @@ FMatrix UOffAxisLocalPlayer::FrustumMatrix(float left, float right, float bottom
 	return Result;
 }
 
-void UOffAxisLocalPlayer::UpdateProjectionMatrix_Internal(FSceneView* View, FMatrix OffAxisMatrix, EStereoscopicPass _Pass)
+void UOffAxisLocalPlayer::UpdateProjectionMatrix_Internal(FSceneView* View, FMatrix OffAxisMatrix, EStereoscopicEye _Pass)
 {
 	FMatrix stereoProjectionMatrix = OffAxisMatrix;
 	s_CurrentPassType = _Pass;
 
 	switch (_Pass)
 	{
-	case eSSP_LEFT_EYE:
+	case eSSE_LEFT_EYE:
 		stereoProjectionMatrix = FTranslationMatrix(FVector(s_ProjectionPlaneOffset, 0.f, 0.f)) * OffAxisMatrix;
 		break;
-	case eSSP_RIGHT_EYE:
+	case eSSE_RIGHT_EYE:
 		stereoProjectionMatrix = FTranslationMatrix(FVector(-s_ProjectionPlaneOffset, 0.f, 0.f)) * OffAxisMatrix;
 		break;
 	default:
@@ -81,7 +116,7 @@ void UOffAxisLocalPlayer::UpdateProjectionMatrix_Internal(FSceneView* View, FMat
 	
 	switch (_Pass)
 	{
-	case eSSP_LEFT_EYE:
+	case eSSE_LEFT_EYE:
 		if (s_ShowDebugMessages)
 		{
 			//GEngine->AddOnScreenDebugMessage(72, 2, FColor::Black, FString::Printf(TEXT("l\n: %s\n"), *View->ViewMatrices.GetProjectionMatrix().ToString()));
@@ -90,7 +125,7 @@ void UOffAxisLocalPlayer::UpdateProjectionMatrix_Internal(FSceneView* View, FMat
 		}
 		s_ProjectionMatrix_left = View->ViewMatrices.GetProjectionMatrix();
 		break;
-	case eSSP_RIGHT_EYE:
+	case eSSE_RIGHT_EYE:
 		s_ProjectionMatrix_right = View->ViewMatrices.GetProjectionMatrix();
 		if (s_ShowDebugMessages)
 		{
@@ -184,7 +219,7 @@ FMatrix UOffAxisLocalPlayer::GenerateOffAxisMatrix_Internal_Test(FVector _eyeRel
 	return GenerateOffAxisMatrix_Internal(_eyeRelativePositon);
 }
 
-FMatrix UOffAxisLocalPlayer::GenerateOffAxisMatrix(FVector _eyeRelativePosition, EStereoscopicPass _PassType)
+FMatrix UOffAxisLocalPlayer::GenerateOffAxisMatrix(FVector _eyeRelativePosition, EStereoscopicEye _PassType)
 {
 	s_CurrentPassType = _PassType;
 	EyeOffsetVector = FVector::ZeroVector;
@@ -196,13 +231,13 @@ FMatrix UOffAxisLocalPlayer::GenerateOffAxisMatrix(FVector _eyeRelativePosition,
 	s_currentAdjustedViewLocation = _eyeRelativePosition;
 	if (Is3DEnabled())
 	{
-		if (_PassType == eSSP_LEFT_EYE)
+		if (_PassType == eSSE_LEFT_EYE)
 		{
 			s_currentAdjustedViewLocation -= EyeOffsetVector;
 			//GEngine->AddOnScreenDebugMessage(455, 10, FColor::Cyan, FString::Printf(TEXT("adjustedEyePositionForS3D l: %s"), *s_currentAdjustedViewLocation.ToString()));
 
 		}
-		else if (_PassType == eSSP_RIGHT_EYE)
+		else if (_PassType == eSSE_RIGHT_EYE)
 		{
 			s_currentAdjustedViewLocation += EyeOffsetVector;
 			//GEngine->AddOnScreenDebugMessage(456, 10, FColor::Cyan, FString::Printf(TEXT("adjustedEyePositionForS3D r: %s"), *s_currentAdjustedViewLocation.ToString()));
@@ -379,18 +414,18 @@ bool UOffAxisLocalPlayer::OffAxisDeprojectScreenToWorld_Internal(
 		{
 			if (_screenPosition.X < _viewportsize.X/2)
 			{
-				LP->GetProjectionData(LP->ViewportClient->Viewport, eSSP_LEFT_EYE, /*out*/ ProjectionData);
+				LP->GetProjectionData(LP->ViewportClient->Viewport, /*out*/ ProjectionData, GetStereoIndexFromEye(eSSE_LEFT_EYE));
 				eyeProjectionMatrix = s_ProjectionMatrix_left;
 			}
 			else
 			{
-				LP->GetProjectionData(LP->ViewportClient->Viewport, eSSP_RIGHT_EYE, /*out*/ ProjectionData);
+				LP->GetProjectionData(LP->ViewportClient->Viewport, /*out*/ ProjectionData, GetStereoIndexFromEye(eSSE_RIGHT_EYE));
 				eyeProjectionMatrix = s_ProjectionMatrix_right;
 			}
 		}
 		else
 		{
-			LP->GetProjectionData(LP->ViewportClient->Viewport, eSSP_FULL, /*out*/ ProjectionData);
+			LP->GetProjectionData(LP->ViewportClient->Viewport, /*out*/ ProjectionData, GetStereoIndexFromEye(eSSE_MONOSCOPIC));
 			eyeProjectionMatrix = s_ProjectionMatrix;
 		}
 		//GEngine->AddOnScreenDebugMessage(312, 10, FColor::Cyan, FString::Printf(TEXT("ViewOrigin: %s"), *(ProjectionData.ViewOrigin).ToString()));
@@ -480,10 +515,10 @@ bool UOffAxisLocalPlayer::Is3DEnabled()
 
 	switch (s_CurrentPassType)
 	{
-	case eSSP_LEFT_EYE:
+	case eSSE_LEFT_EYE:
 		s_Is3D = true;
 		break;
-	case eSSP_RIGHT_EYE:
+	case eSSE_RIGHT_EYE:
 		s_Is3D = true;
 		break;
 	default:

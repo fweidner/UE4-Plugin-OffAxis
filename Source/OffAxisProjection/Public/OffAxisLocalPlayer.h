@@ -25,13 +25,13 @@ class OFFAXISPROJECTION_API UOffAxisLocalPlayer : public ULocalPlayer
 		FRotator& OutViewRotation,
 		FViewport* Viewport,
 		class FViewElementDrawer* ViewDrawer = NULL,
-		EStereoscopicPass StereoPass = eSSP_FULL) override;
+		int32 StereoViewIndex = -1) override;
 
 public:
 
-	void UpdateProjectionMatrix_Internal(FSceneView * View, FMatrix OffAxisMatrix, EStereoscopicPass _Pass);
+	void UpdateProjectionMatrix_Internal(FSceneView * View, FMatrix OffAxisMatrix, EStereoscopicEye _Pass);
 
-	FMatrix GenerateOffAxisMatrix(FVector _eyeRelativePositon, EStereoscopicPass _PassType);
+	FMatrix GenerateOffAxisMatrix(FVector _eyeRelativePositon, EStereoscopicEye _PassType);
 
 	FMatrix GenerateOffAxisMatrix_Internal(FVector _eyeRelativePositon);
 	FMatrix GenerateOffAxisMatrix_Internal_Test(FVector _eyeRelativePositon);
@@ -106,6 +106,9 @@ public:
 		static bool Is3DEnabled();
 
 
+	static EStereoscopicEye GetEyeFromStereoIndex(const int32 StereoViewIndex);
+	static int32 GetStereoIndexFromEye(const EStereoscopicEye eye);
+	
 	static FVector OffAxisToUE(FVector _OffAxisVector);
 
 private: 
@@ -150,7 +153,7 @@ static FVector pe = FVector::ZeroVector;
 static FMatrix s_ProjectionMatrix = FMatrix();
 static FMatrix s_ProjectionMatrix_right = FMatrix();
 static FMatrix s_ProjectionMatrix_left = FMatrix();
-static EStereoscopicPass s_CurrentPassType;
+static EStereoscopicEye s_CurrentPassType;
 
 static FVector EyeOffsetVector = FVector::ZeroVector;
 
