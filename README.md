@@ -3,7 +3,8 @@
 ![OffAxisExample](https://github.com/fweidner/UE4-Plugin-OffAxis/blob/master/2018-06-13.gif)
 
 ## Current version
-Works with 4.23 :)
+- Works with 4.23 :)
+- check out the branch "UE5" with info on how to run it for UE5
 
 ## General info: 
 It works. But it is (always) experimental :)
